@@ -79,7 +79,6 @@ public class ImportGCodeController extends JPanel{
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				startJob();
-
 			}
 		});
 		//Stop Job Button
@@ -87,7 +86,6 @@ public class ImportGCodeController extends JPanel{
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				stopJob();
-
 			}
 		});
 		//Pause/Resume Job Button
@@ -126,16 +124,18 @@ public class ImportGCodeController extends JPanel{
 		return Arrays.asList(gCodeConsoleView.getConsoleContent().split("\n"));
 	}
 
-
-
 	/**
 	 * Initiate PNP Job
 	 */
 	private void startJob(){
-		//check if valid g code is present in console 1st
-		gCodeConsoleView.highlightLine(0);
+		//TODO check if valid g code is present in console 1st
+		//validateGCode();
+		
+		//TODO MUST BE THREAD SAFE TO ALLOW ACCESS TO UI
+		//new thread
 		//change state to processing
 		jobState = PROCESSING_STATE;
+		
 		//update button displays
 		gCodeConsoleView.startJobButton.setEnabled(false);
 		gCodeConsoleView.pauseJobButton.setEnabled(true);
@@ -147,7 +147,7 @@ public class ImportGCodeController extends JPanel{
 	 * @return nextInstruction integer value that points to the next line of G Code to be executed
 	 */
 	private int pauseJob(){
-		//complete current line, store pointer so we know where to resume, pause transmission
+		//TODO complete current instruction, store pointer so we know where to resume, pause transmission
 		int nextInstruction = 0;
 		gCodeConsoleView.removeFirstLineFromConsole();
 		gCodeConsoleView.highlightLine(0);
@@ -164,10 +164,7 @@ public class ImportGCodeController extends JPanel{
 	 * @param nextInstruction integer value that points to the next line of G Code to be executed
 	 */
 	private void resumeJob(int nextInstruction){
-		//get nextInstruction from consol and resume processing
-		
-		gCodeConsoleView.removeFirstLineFromConsole();
-		gCodeConsoleView.highlightLine(0);
+		//TODO get nextInstruction from console and resume processing
 		//change state to processing
 		jobState = PROCESSING_STATE;
 		//adjust button display settings
@@ -175,10 +172,11 @@ public class ImportGCodeController extends JPanel{
 	}
 
 	/**
-	 * Entirely stops PNP Job being processed
+	 * WARNING: Entirely terminates PNP Job being processed
+	 * 
 	 */
 	private void stopJob(){
-
+		//TODO store 
 		jobState = STOPPED_STATE;
 		//adjust button display settings
 		gCodeConsoleView.startJobButton.setEnabled(true);
@@ -194,7 +192,6 @@ public class ImportGCodeController extends JPanel{
 	public int getJobState(){
 		return jobState;
 	}
-
 
 	/**
 	 * Default Serial Version UID
