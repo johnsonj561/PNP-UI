@@ -14,4 +14,11 @@
 	<natures>
 		<nature>org.eclipse.jdt.core.javanature</nature>
 	</natures>
+	<linkedResources>
+		<link>
+			<name>jSSC-2.7.0</name>
+			<type>2</type>
+			<location>C:/java/PnPWorkspace/JSSCDemo/lib/jSSC-2.7.0</location>
+		</link>
+	</linkedResources>
 </projectDescription>
