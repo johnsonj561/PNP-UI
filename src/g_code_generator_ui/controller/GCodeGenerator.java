@@ -26,14 +26,17 @@ public class GCodeGenerator {
 		partsFilePath = partsPath;
 		inputFileType = fileType;
 		//Initialize CentroidParsers and generate SMTComponent arrays
-		parseInputFiles();
+		isValidInput = parseInputFiles();
 	}	
 
 	/**
 	 * Initialize CentroidParsers and generate SMTComponent arrays that store all components
 	 * being placed on PCB and locations of all parts (reels/trays)
 	 */
-	private void parseInputFiles(){
+	private boolean parseInputFiles(){
+		//flags to detect correct parse job
+		boolean centroidParseResult;
+		boolean partsParseResult;
 		//create a Centroid parser that will parse the PCB Centroid File and the Parts File
 		centroidParser = new CentroidParser(centroidFilePath);
 		centroidComponentList = centroidParser.getComponentList();
@@ -42,16 +45,20 @@ public class GCodeGenerator {
 
 		//generate appropriate array of components to be placed and parts from reels/trays
 		if(inputFileType == EAGLE_CENTROID_FILE){
-			generateEagleComponentArrayFromCentroid();
-			generateEagleComponentArrayFromParts();
+			centroidParseResult = generateEagleComponentArrayFromCentroid();
+			partsParseResult = generateEagleComponentArrayFromParts();
+			System.out.println("Centroid and Parts Files parsed.");
 		}
 		else if(inputFileType == ALTIUM_CENTROID_FILE){
-			generateAltiumComponentArrayFromCentroid();
-			generateAltiumComponentArrayFromParts();
+			centroidParseResult = generateAltiumComponentArrayFromCentroid();
+			partsParseResult = generateAltiumComponentArrayFromParts();
+			System.out.println("Centroid and Parts Files parsed");
 		}
 		else{
-			System.out.println("Error GCodeGenerator: invalid centroid file type");
+			centroidParseResult = partsParseResult = false;
+			System.out.println("Error GCodeGenerator:\nparseInputFilles(): invalid centroid file type");
 		}
+		return (centroidParseResult && partsParseResult);
 	}
 
 	/**
@@ -170,86 +177,122 @@ public class GCodeGenerator {
 
 	/**
 	 * Produces an array of EagleSMTComponents from input centroid file
-	 * @return eagleComponents array of EagleSMTComponents generated from centroid file
+	 * @return true if array of SMTComponents generated without error
 	 */
-	private void generateEagleComponentArrayFromCentroid(){
+	private boolean generateEagleComponentArrayFromCentroid(){
 		if(inputFileType == EAGLE_CENTROID_FILE){
 			//array of EagleSMTComponent objects to store each component object
 			eagleInputComponents = new EagleSMTComponent[centroidComponentList.size()];
 			//for each inputComponent in List, generate corresponding EagleSMTComponent
 			//add each EagleSMTComponent to the eagleComponents array
 			for(int i = 0; i < centroidComponentList.size(); ++i){
+				//create EagleSMTComponent and add to array of components
 				eagleInputComponents[i] = new EagleSMTComponent(centroidParser.parseComponentAttributes(
 						centroidComponentList.get(i), EagleSMTComponent.ATTRIBUTE_COUNT));
+				//if we encounter a bad part, we halt and return error to user
+				if(!eagleInputComponents[i].isValidComponent()){
+					return false;
+				}
 			}
+			return true;
 		}
 		else{
 			System.out.println("\nError GCodeGenerator: generateEagleArrayFromCentroid(): verify that you are using" +
 					" correct input file type\n");
+			return false;
 		}
 	}
 
 	/**
 	 * Produces an array of AltiumSMTComponents from input centroid file
-	 * @return altiumComponents array of AltiumSMTComponents generated from centroid file
+	 * @return true if array of SMTComponents generated without error
 	 */
-	private void generateAltiumComponentArrayFromCentroid(){
+	private boolean generateAltiumComponentArrayFromCentroid(){
 		if(inputFileType == ALTIUM_CENTROID_FILE){
 			//array of AltiumSMTComponent objects to store each component object
 			altiumInputComponents = new AltiumSMTComponent[centroidComponentList.size()];
 			//for each inputComponent in List, generate corresponding AltiumSMTComponent
 			//add each AltiumSMTComponent to the AltiumComponents array
 			for(int i = 0; i < centroidComponentList.size(); ++i){
+				//create Altium SMTComponent and add to array of components
 				altiumInputComponents[i] = new AltiumSMTComponent(centroidParser.parseComponentAttributes(
 						centroidComponentList.get(i), AltiumSMTComponent.ATTRIBUTE_COUNT));
+				//if we encounter a bad part, we halt and return error to user
+				if(!altiumInputComponents[i].isValidComponent()){
+					return false;
+				}
 			}
+			return true;
 		}
 		else{
 			System.out.println("\nError GCodeGenerator: generateAltiumComponentArrayFromCentroid(): verify that you are using" +
 					" correct input file type\n");
+			return false;
 		}
 	}
 
 	/**
 	 * Produces an array of EagleSMTComponents from input parts file (reels/tray locations)
+	 * @return true if part's SMTComponent list generated wit no error
 	 */
-	private void generateEagleComponentArrayFromParts(){
+	private boolean generateEagleComponentArrayFromParts(){
 		if(inputFileType == EAGLE_CENTROID_FILE){
 			//array of EagleSMTComponent objects to store each component object
 			eagleParts = new EagleSMTComponent[partsComponentList.size()];
 			//for each partsComponent in List, generate corresponding EagleSMTComponent
 			//add each EagleSMTComponent to the eagleComponents array
 			for(int i = 0; i < partsComponentList.size(); ++i){
+				//generate Eagle SMTComponent and add to component array
 				eagleParts[i] = new EagleSMTComponent(partsParser.parseComponentAttributes(
 						partsComponentList.get(i), EagleSMTComponent.ATTRIBUTE_COUNT));
+				//if we encounter a bad part, we halt and return error to user
+				if(!eagleParts[i].isValidComponent()){
+					return false;
+				}
 			}
+			return true;
 		}
 		else{
 			System.out.println("\nError GCodeGenerator: generateEagleArrayFromParts(): verify that you are using" +
 					" correct input file type\n");
+			return false;
 		}
 	}
 
 	/**
 	 * Produces an array of AltiumSMTComponents from input parts file (reels/tray locations)
+	 * @return true if part's SMTComponent list generated wit no error
 	 */
-	private void generateAltiumComponentArrayFromParts(){
+	private boolean generateAltiumComponentArrayFromParts(){
 		if(inputFileType == ALTIUM_CENTROID_FILE){
 			//array of AltiumSMTComponent objects to store each component object
 			altiumParts = new AltiumSMTComponent[partsComponentList.size()];
 			//for each partsComponent in List, generate corresponding AltiumSMTComponent
 			//add each AltiumSMTComponent to the altiumParts array
 			for(int i = 0; i < partsComponentList.size(); ++i){
+				//generate Altium SMTComponent and add to component array
 				altiumParts[i] = new AltiumSMTComponent(partsParser.parseComponentAttributes(
 						partsComponentList.get(i), AltiumSMTComponent.ATTRIBUTE_COUNT));
+				//if we encounter a bad part, we halt and return error to user
+				if(!altiumParts[i].isValidComponent()){
+					return false;
+				}
 			}
+			return true;
 		}
 		else{
 			System.out.println("\nError GCodeGenerator: generateAltiumArrayFromParts(): verify that you are using" +
 					" correct input file type\n");
+			return false;
 		}
 	}
 
+	/**
+	 * @return Return true if input centroid and parts files were parsed without error
+	 */
+	public boolean isValidInput(){
+		return isValidInput;
+	}
 
 	//components to be placed
 	private EagleSMTComponent[] eagleInputComponents;
@@ -271,5 +314,7 @@ public class GCodeGenerator {
 	//lists to store Strings of component attributes
 	private List<String> centroidComponentList;
 	private List<String> partsComponentList;
+	//flag to detect proper parsing
+	private boolean isValidInput;
 
 }
