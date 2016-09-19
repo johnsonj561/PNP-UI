@@ -1,4 +1,4 @@
-import import_g_code_ui.controller.ImportGCodeController;
+import import_g_code_ui.controller.UploadGCodeController;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -20,7 +20,7 @@ public class GCodeUploadFileApp {
 		mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
 		//create instance of upload g code panel and align
-		ImportGCodeController mUploadGCodePanel = new ImportGCodeController();
+		UploadGCodeController mUploadGCodePanel = new UploadGCodeController();
 		mUploadGCodePanel.setAlignmentX(JPanel.LEFT_ALIGNMENT);
 
 		//add panel to JFramefor and display
