@@ -11,7 +11,6 @@ import javax.swing.JPanel;
  * ProcessJobPanel constructs a JPanel object that displays job status to user and
  * provides functionality to update status programatically 
  * @author Justin Johnson
- *
  */
 public class ProcessJobButtonView extends JPanel{
 
@@ -20,34 +19,26 @@ public class ProcessJobButtonView extends JPanel{
 	 * @param status
 	 */
 	public ProcessJobButtonView(String status) {
+		this.status = status;
+		initUI();
+	}
+
+	/**
+	 * Initialize Job Process and Status UI Elements
+	 */
+	private void initUI(){
 		processJobHeadingLabel = new JLabel("Job Status:");
 		processJobHeadingLabel.setFont(new Font("Verdana", Font.BOLD, 13));
 		jobStatusLabel = new JLabel(status);
 		jobStatusLabel.setFont(new Font("Verdana", Font.ITALIC, 12));
 		//add heading label, status label, and buttons to this JPanel
 		this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-		this.setBorder(BorderFactory.createEmptyBorder(25, 25, 25, 25));
+		this.setBorder(BorderFactory.createEmptyBorder(10, 10, 25, 10));
 		this.add(processJobHeadingLabel);
 		this.add(Box.createRigidArea(new Dimension(0, 10)));
 		this.add(jobStatusLabel);
 	}
-	
-	/**
-	 * Default Constructor leaves current job status blank
-	 */
-	public ProcessJobButtonView(){
-		processJobHeadingLabel = new JLabel("Job Status:");
-		processJobHeadingLabel.setFont(new Font("Verdana", Font.BOLD, 13));
-		jobStatusLabel = new JLabel("");
-		jobStatusLabel.setFont(new Font("Verdana", Font.ITALIC, 12));
-		//add heading label, status label, and buttons to this JPanel
-		this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-		this.setBorder(BorderFactory.createEmptyBorder(25, 25, 25, 25));
-		this.add(processJobHeadingLabel);
-		this.add(Box.createRigidArea(new Dimension(0, 10)));
-		this.add(jobStatusLabel);
-	}
-	
+
 	/**
 	 * Updates text field to display the file path selected by user
 	 * @param path of the file selected by user
@@ -56,6 +47,7 @@ public class ProcessJobButtonView extends JPanel{
 		jobStatusLabel.setText(status);
 	}
 	
+
 	/**
 	 * Default serial UID
 	 */
@@ -66,4 +58,5 @@ public class ProcessJobButtonView extends JPanel{
 	 */
 	private JLabel processJobHeadingLabel;
 	private JLabel jobStatusLabel;
+	private String status;
 }

@@ -16,18 +16,26 @@ import javax.swing.JPanel;
  */
 public class GCodeInputFileTypeView extends JPanel{
 
-	
+
 	/**
-	 * Constructor defines panel components
+	 * Constructor creates JPanel that displays file type chooser to allow
+	 * user to select a file type: Altium or Eagle
 	 */
 	public GCodeInputFileTypeView() {
+		initUI();
+	}
+
+	/**
+	 * Initialize UI elements of G Code Input File view
+	 */
+	private void initUI(){
 		//create main panel to store components, components to be laid out horizontally across x axis
 		mainPanel = new JPanel();
 		mainPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
-		mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 25, 10, 25));
+		mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 		//align components to let side of panel and assign empty border(padding)
 		//label directing user to select file type
-		selectFileTypeLabel = new JLabel("Please select centroid file type:");
+		selectFileTypeLabel = new JLabel("Select centroid file type:");
 		//drop down menu to allow user to select file type, Eagle or Altium
 		String[] fileTypes = {"Altium", "Eagle"};
 		fileTypeDropDown = new JComboBox<String>(fileTypes);
@@ -41,15 +49,14 @@ public class GCodeInputFileTypeView extends JPanel{
 				System.out.println("Input File Type: " + fileType);
 			}
 		});
-		
+
 		mainPanel.add(selectFileTypeLabel);
 		mainPanel.add(Box.createRigidArea(new Dimension(15, 0)));
 		mainPanel.add(fileTypeDropDown);
-		
 		this.setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
 		this.add(mainPanel);
 	}
-	
+
 	/**
 	 * Default serial UID
 	 */
@@ -68,7 +75,7 @@ public class GCodeInputFileTypeView extends JPanel{
 		}
 		return -1;
 	}
-	
+
 	/**
 	 * Class Variables
 	 */

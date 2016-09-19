@@ -20,24 +20,47 @@ import javax.swing.JTextField;
  */
 public class GCodeInputFileView extends JPanel{
 
-	
-
+	/**
+	 * Constructor builds Input File field to allow user to select input path
+	 * @param heading
+	 */
 	public GCodeInputFileView(String heading) {
+		this.heading = heading;
+		initUI();
+		initButtons();
+	}
+
+	/**
+	 * Initialize UI Elements for Input File View
+	 */
+	private void initUI(){
 		//Input heading panel
 		inputFileHeadingPanel = new JPanel();
 		inputFileHeadingPanel.setLayout(new BoxLayout(inputFileHeadingPanel, BoxLayout.X_AXIS));
 		inputFileHeadingPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-		inputFileHeadingPanel.setBorder(BorderFactory.createEmptyBorder(10, 25, 10, 25));
+		inputFileHeadingPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 		getFileLabel = new JLabel(heading);
 		inputFileHeadingPanel.add(getFileLabel);
 		//Centroid Input file panel
 		getFilePanel = new JPanel();
 		getFilePanel.setLayout(new BoxLayout(getFilePanel, BoxLayout.X_AXIS));
 		getFilePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-		getFilePanel.setBorder(BorderFactory.createEmptyBorder(0, 25, 10, 25));
+		getFilePanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));
 		inputFileTextField = new JTextField(30);
 		inputFileTextField.setMaximumSize(new Dimension(Integer.MAX_VALUE, inputFileTextField.getPreferredSize().height));
 		getFileButton = new JButton("Browse");
+		getFilePanel.add(inputFileTextField);
+		getFilePanel.add(Box.createRigidArea(new Dimension(25, 0)));
+		getFilePanel.add(getFileButton);
+		this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+		this.add(inputFileHeadingPanel);
+		this.add(getFilePanel);
+	}
+
+	/**
+	 * Initialize button's ActionListener
+	 */
+	private void initButtons(){
 		getFileButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -52,15 +75,8 @@ public class GCodeInputFileView extends JPanel{
 				} 
 			}
 		});
-		getFilePanel.add(inputFileTextField);
-		getFilePanel.add(Box.createRigidArea(new Dimension(25, 0)));
-		getFilePanel.add(getFileButton);
-		
-		this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-		this.add(inputFileHeadingPanel);
-		this.add(getFilePanel);
 	}
-	
+
 	/**
 	 * Updates text field to display the file path selected by user
 	 * @param path of the file selected by user
@@ -68,7 +84,7 @@ public class GCodeInputFileView extends JPanel{
 	private void updateInputPath(String path){
 		inputFileTextField.setText(path);
 	}
-	
+
 	/**
 	 * Get input path from Text Field
 	 * @return String input path
@@ -76,7 +92,7 @@ public class GCodeInputFileView extends JPanel{
 	public String getInputPath(){
 		return inputFileTextField.getText();
 	}
-	
+
 	/**
 	 * Default serial UID
 	 */
@@ -90,4 +106,5 @@ public class GCodeInputFileView extends JPanel{
 	private JLabel getFileLabel;
 	private JTextField inputFileTextField;
 	private JButton getFileButton;
+	private String heading;
 }

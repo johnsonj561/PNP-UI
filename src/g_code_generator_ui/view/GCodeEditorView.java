@@ -22,10 +22,17 @@ public class GCodeEditorView extends JPanel{
 	 * Constructor creates instance of GCodeEditorView
 	 */
 	public GCodeEditorView() {
+		initUI();
+	}
+	
+	/**
+	 * Initialize G Code Editor window's UI Elements
+	 */
+	private void initUI(){
 		//create Panel for text field (G Code Editor)
 		textAreaPanel = new JPanel();
 		textAreaPanel.setLayout(new BoxLayout(textAreaPanel, BoxLayout.Y_AXIS));
-		textAreaPanel.setBorder(BorderFactory.createEmptyBorder(25, 25, 10, 25));
+		textAreaPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 		gCodeTextArea = new JTextArea(20, 40);
 		scrollPane = new JScrollPane(gCodeTextArea); 
 		scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
@@ -34,14 +41,14 @@ public class GCodeEditorView extends JPanel{
 		buttonsPanel = new JPanel();
 		//use flow layout and align buttons to right
 		buttonsPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
-		buttonsPanel.setBorder(BorderFactory.createEmptyBorder(0, 25, 10, 25));
+		buttonsPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 		//save button functionality
 		saveGCodeButton = new JButton("Save As");
 		//clear button functionality
 		clearGCodeButton = new JButton("Clear");
 		//add buttons to button panel
 		buttonsPanel.add(clearGCodeButton);
-		buttonsPanel.add(Box.createRigidArea(new Dimension(15, 0)));
+		buttonsPanel.add(Box.createRigidArea(new Dimension(10, 0)));
 		buttonsPanel.add(saveGCodeButton);
 		//components of GCodeEditorPanel will be laid out along Y Axis
 		this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
@@ -49,7 +56,7 @@ public class GCodeEditorView extends JPanel{
 		this.add(textAreaPanel);
 		this.add(buttonsPanel);
 	}
-
+	
 	/**
 	 * Clear G Code Output editor of all text
 	 */
@@ -57,9 +64,10 @@ public class GCodeEditorView extends JPanel{
 		gCodeTextArea.setText("");
 	}
 
-	public void write(String s){
+	public void writeToEditor(String s){
 		gCodeTextArea.setText(s);
 	}
+	
 	/**
 	 * Default serial UID
 	 */
