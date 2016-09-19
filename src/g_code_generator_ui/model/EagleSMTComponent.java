@@ -16,12 +16,27 @@ public class EagleSMTComponent extends SMTComponent{
 	public EagleSMTComponent(String[] attributes) {
 		super(attributes);
 		super.attributeTitles = this.attributeTitles;
-		description = attributes[0];
-		xCoordinate = attributes[1];
-		yCoordinate = attributes[2];
-		rotation = attributes[3];
-		value = attributes[4];
-		packageType = attributes[5];
+		if(attributes.length == ATTRIBUTE_COUNT){
+			description = attributes[0];
+			xCoordinate = attributes[1];
+			yCoordinate = attributes[2];
+			rotation = attributes[3];
+			value = attributes[4];
+			packageType = attributes[5];
+			isValidComponent = true;
+		}
+		else{
+			isValidComponent = false;
+		}
+	}
+	
+	/**
+	 * Returns true if total number of attributes matches the expected number of attributes
+	 * If attribute list contains more/less than is expected, return false
+	 * @return true if attributeList.length == this.ATTRIBUTE_COUNT
+	 */
+	public boolean isValidComponent(){
+		return isValidComponent;
 	}
 
 	/**
@@ -118,5 +133,6 @@ public class EagleSMTComponent extends SMTComponent{
 	private String rotation;
 	private String value;
 	private String packageType;
+	private boolean isValidComponent;
 	
 }
