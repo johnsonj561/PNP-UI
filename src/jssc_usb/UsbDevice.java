@@ -6,6 +6,11 @@ import jssc.SerialPortEventListener;
 import jssc.SerialPortException;
 import jssc.SerialPortList;
 
+/**
+ * UsbDevice provides system's available Ports and read/write functionality
+ * @author Justin Johnson
+ *
+ */
 public class UsbDevice {
 
 	/**
@@ -177,8 +182,6 @@ public class UsbDevice {
 		}
 		return false;
 	}
-	
-
 	
 	private SerialPort serialPort;
 	private String[] serialPortList;
