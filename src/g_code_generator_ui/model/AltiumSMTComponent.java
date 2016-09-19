@@ -16,22 +16,43 @@ public class AltiumSMTComponent extends SMTComponent{
 	public AltiumSMTComponent(String[] attributes) {
 		super(attributes);
 		super.attributeTitles = this.attributeTitles;
-		stripUnits();
-		refDesignator = attributeList[0];
-		footprint = attributeList[1];
-		xCoordinate = attributeList[2];
-		yCoordinate = attributeList[3];
-		xReference = attributeList[4];
-		yReference = attributeList[5];
-		xPad = attributeList[6];
-		yPad = attributeList[7];
-		boardSide = attributeList[8];
-		rotation = attributeList[9];
-		comment = attributeList[10];
+		//first check if attribute list is valid for Altium component
+		if(attributes.length == ATTRIBUTE_COUNT){
+			stripUnits();
+			refDesignator = attributeList[0];
+			footprint = attributeList[1];
+			xCoordinate = attributeList[2];
+			yCoordinate = attributeList[3];
+			xReference = attributeList[4];
+			yReference = attributeList[5];
+			xPad = attributeList[6];
+			yPad = attributeList[7];
+			boardSide = attributeList[8];
+			rotation = attributeList[9];
+			comment = attributeList[10];
+			isValidComponent = true;
+		}
+		else{
+			isValidComponent = false;
+		}
+		
+		
 	}
 
+	/**
+	 * Returns true if total number of attributes matches the expected number of attributes
+	 * If attribute list contains more/less than is expected, return false
+	 * @return true if attributeList.length == this.ATTRIBUTE_COUNT
+	 */
+	public boolean isValidComponent(){
+		return isValidComponent;
+	}
+	
+	/**
+	 * Removes units from end of dimesion/size values
+	 */
 	private void stripUnits(){
-		for(int i = 2; i < 8; i++){
+		for(int i = 2; i < attributeList.length; i++){
 			attributeList[i].replace("mil", " ");
 		}
 	}
@@ -207,5 +228,6 @@ public class AltiumSMTComponent extends SMTComponent{
 	private String boardSide;
 	private String rotation;
 	private String comment;
+	private boolean isValidComponent;
 	
 }
