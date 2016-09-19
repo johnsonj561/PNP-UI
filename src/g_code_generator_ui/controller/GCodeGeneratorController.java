@@ -12,10 +12,13 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
+import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JFileChooser;
 import javax.swing.JPanel;
 import javax.swing.filechooser.FileNameExtensionFilter;
+
+import connection_settings_ui.view.SettingsTitleView;
 
 /**
  * GCodeGeneratorPanel allows user to select/enter PCB Centroid and Part input files,
@@ -39,10 +42,13 @@ public class GCodeGeneratorController extends JPanel{
 	 * Views: GCodeInputFileView, GCodeInputFileTypeView,GCodeEditorView
 	 */
 	private void initUI(){
+		//Dimensions Title
+		gCodeGeneratorTitle = new SettingsTitleView("Create G Code Instructions From PCB Design");
+		gCodeGeneratorTitle.setAlignmentX(JPanel.LEFT_ALIGNMENT);
 		//Create instance of Centroid and Parts Input File Chooser Panels
-		mCentroidInput = new GCodeInputFileView("Please select an Altium or Eagle Centroid input file:");
+		mCentroidInput = new GCodeInputFileView("Select an Altium or Eagle Centroid input file:");
 		mCentroidInput.setAlignmentX(JPanel.LEFT_ALIGNMENT);
-		mPartsInput = new GCodeInputFileView("Please enter a corresponding parts file:");
+		mPartsInput = new GCodeInputFileView("Select a corresponding parts file:");
 		mPartsInput.setAlignmentX(JPanel.LEFT_ALIGNMENT);
 		//Create instance of Process Input Panel
 		mProcessInputPanel = new GCodeInputFileTypeView();
@@ -57,13 +63,15 @@ public class GCodeGeneratorController extends JPanel{
 		gCodeOutput = "";
 		//Add individual components to this.JPanel for final display, laid on vertically along y Axis
 		this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+		this.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));
+		this.add(gCodeGeneratorTitle);
 		this.add(mCentroidInput);
 		this.add(mPartsInput);
 		this.add(mProcessInputPanel);
 		this.add(mGenerateGCodeButtonPanel);
 		this.add(mGCodeEditorPanel);
 	}
-	
+
 	/**
 	 * Initialize GCodeGenerator Buttons
 	 * 
@@ -98,13 +106,25 @@ public class GCodeGeneratorController extends JPanel{
 	 * Generate G Code from input files and write G Code to Editor for display
 	 */
 	private void writeGCodeToEditor(){
-		GCodeGenerator mGCodeGenerator = new GCodeGenerator(
-				mCentroidInput.getInputPath(), mPartsInput.getInputPath(), mProcessInputPanel.getJComboBoxValue());
-		gCodeOutput = mGCodeGenerator.initializeGCode();
-		gCodeOutput += mGCodeGenerator.generateGCode();
-		mGCodeEditorPanel.write(gCodeOutput);
+		if(mPartsInput.getInputPath().length() > 0 && mCentroidInput.getInputPath().length() > 0){
+			GCodeGenerator mGCodeGenerator = new GCodeGenerator(
+					mCentroidInput.getInputPath(), mPartsInput.getInputPath(), mProcessInputPanel.getJComboBoxValue());
+			if(mGCodeGenerator.isValidInput()){
+				gCodeOutput = mGCodeGenerator.initializeGCode();
+				gCodeOutput += mGCodeGenerator.generateGCode();
+				mGCodeEditorPanel.writeToEditor(gCodeOutput);
+			}
+			else{
+				mGCodeEditorPanel.writeToEditor("Error Parsing Input Files" +
+						"\nVerify that Centroid and Parts Files Have Matching File Types (Altium vs Eagle)");
+			}
+		}
+		else{
+			mGCodeEditorPanel.writeToEditor("Please select valid input file paths");
+		}
+
 	}
-	
+
 	/**
 	 * Write text from G-Code Editor to output file and save locally as text file
 	 */
@@ -145,6 +165,7 @@ public class GCodeGeneratorController extends JPanel{
 	/**
 	 * Class Members
 	 */
+	private SettingsTitleView gCodeGeneratorTitle;
 	private GCodeInputFileView mCentroidInput;
 	private GCodeInputFileView mPartsInput;
 	private GCodeInputFileTypeView mProcessInputPanel;
