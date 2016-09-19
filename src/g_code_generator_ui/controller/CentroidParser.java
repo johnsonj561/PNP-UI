@@ -16,8 +16,7 @@ public class CentroidParser {
 		System.out.println("CentroidParser init()");
 		System.out.println(centroidInput);
 		inputFile = centroidInput;
-		//add an assert statement to check for bad file name
-		inputFile = centroidInput;
+		//TODO check for bad input files
 	}
 
 	/**
@@ -53,6 +52,7 @@ public class CentroidParser {
 	 * @return String[] componentAttributeArray which contains all component attributes
 	 */
 	public String[] parseComponentAttributes(String component, int attributeCount){
+		//TODO use attributeCount to check for invalid input types
 		return component.split("[ ,]+");
 	}
 	
