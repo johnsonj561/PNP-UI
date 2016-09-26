@@ -80,11 +80,28 @@ public class SettingsInputTextView extends JPanel{
 	}
 
 	/**
-	 * Get input path from Text Field
-	 * @return String input path
+	 * Get user input as a double
+	 * @return Double user input 
 	 */
-	public String getInputText(){
+	public double getInputAsDouble(){
+		return Double.parseDouble(inputFileTextField.getText());
+		
+	}
+	
+	/**
+	 * Get user input as a string
+	 * @return String user input
+	 */
+	public String getInputAsString(){
 		return inputFileTextField.getText();
+	}
+	
+	/**
+	 * Get user input as integer
+	 * @return int user input
+	 */
+	public int getInputAsInt(){
+		return Integer.parseInt(inputFileTextField.getText());
 	}
 
 	/**
