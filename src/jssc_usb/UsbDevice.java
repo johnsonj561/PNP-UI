@@ -1,8 +1,6 @@
 package jssc_usb;
 
 import jssc.SerialPort;
-import jssc.SerialPortEvent;
-import jssc.SerialPortEventListener;
 import jssc.SerialPortException;
 import jssc.SerialPortList;
 
@@ -11,68 +9,51 @@ import jssc.SerialPortList;
  * @author Justin Johnson
  *
  */
-public class UsbDevice {
+public class UsbDevice{
 
 	/**
-	 * UsbDevice Constructor gets list of system's current serial ports and initializes portID to NULL
-	 * Note: portID must be set with updatePortID(String) before establishing connection
-	 */
-	public UsbDevice(){
-		System.out.println("\nUsbDevice constructor: this.portID initialized to null");
-		updateSerialPortList();
-		portID = null;
-	}
-	
-	/**
-	 * UsbDevice Constructor gets list of system's current serial ports and initializes portID to passed value
+	 * UsbDevice Constructor gets list of system's current serial ports and initializes portID
 	 * Assumes String port is accurate identifier of system port ie) 'COM5'
+	 * Sets default params: DATABITS_8, STOPBITS_1, PARITY_NONE
 	 * @param String port assigned for connection
+	 * @param int baudRate
 	 */
-	public UsbDevice(String port){
+	public UsbDevice(String port, int baudRate){
 		System.out.println("\nUsbDevice constructor: this.portID initialized to " + port);
 		updateSerialPortList();
 		portID = port;
 		serialPort = new SerialPort(portID);
+		this.baudRate = baudRate;
+		openPort();
+		
 	}
-	
+
 	/**
-	 * Initialize SerialPortEventListener to handle incoming data
-	 * @throws SerialPortException
-	 */
-	public void initListener() throws SerialPortException{
-		serialPort.addEventListener(new SerialPortEventListener() {
-			@Override
-			public void serialEvent(SerialPortEvent event) {
-				//TODO check for read event
-				readMessage();
-			}
-		});
-	}
-	
-	/**
-	 * Send message to assigned port
+	 * Send message to assigned port and verify that message was sent successfully
 	 * @param message to be sent
 	 * @return true if message sent successful
 	 */
 	public boolean writeMessage(String message){
-		try {
-	        System.out.println("\nPort opened: " + serialPort.openPort());
-	        //setParams(int baudRate, int dataBits, int stopBits, int parity)
-	        System.out.println("Params setted: " + serialPort.setParams(9600, 8, 1, 0));
-	        //Write byte array to port
-	        boolean result = serialPort.writeBytes(message.getBytes());
-	        if(result){
-		        System.out.println("Message sent successful: " + message);
-	        }
-	        System.out.println("Port closed: " + serialPort.closePort());
-	        return true;
-	    }
-	    catch (SerialPortException ex){
-	        System.out.println(ex);
-	        return false;
-	    }
+		if(isOpen){
+			try {
+				if(serialPort.writeBytes(message.getBytes())){
+					System.out.println("UsbDevice:\nwriteMessage(): Message sent successful -> " + message);
+					return true;
+				}
+				return false;	//else message did not send successful!
+			}
+			catch (SerialPortException ex){
+				System.out.println("UsbDevice:\nwriteMessage(): Error sending message -> " + message);
+				System.out.println(ex);
+				return false;
+			}
+		}
+		else{
+			System.out.println("UsbDevice: In writeMessage()\nPort is not open, unable to send");
+			return false;
+		}
 	}
-	
+
 	/**
 	 * Read all available bytes from port
 	 * @return byte[] from port or null if read fails
@@ -81,6 +62,7 @@ public class UsbDevice {
 		byte[] message = null;
 		try {
 			message = serialPort.readBytes();
+			System.out.println(message);
 			return message;
 		} catch (SerialPortException e) {
 			System.out.println("UsbDevice serialEvent: Unable to readBytes()");
@@ -88,7 +70,7 @@ public class UsbDevice {
 			return message;
 		}
 	}
-	
+
 	/**
 	 * Update portID to allow for connection for specified device
 	 * @param port String identifier of specified port
@@ -98,7 +80,7 @@ public class UsbDevice {
 		portID = port;
 		serialPort = new SerialPort(portID);
 	}
-	
+
 	/**
 	 * Update the array of serial ports in the system using default settings
 	 * @return String array of serial port names
@@ -109,6 +91,14 @@ public class UsbDevice {
 		for(String port : serialPortList){
 			System.out.println(port);
 		}
+	}
+
+	/**
+	 * Static method that returns system's available Serial Ports
+	 * @return String[] of system's available Serial Ports
+	 */
+	public static String[] findSerialPorts(){
+		return SerialPortList.getPortNames();
 	}
 	
 	/**
@@ -126,52 +116,66 @@ public class UsbDevice {
 			System.out.println("RLSD Line: " + serialPort.isRLSD());
 		}
 	}
+
+	/**
+	 * Return UsbDevice port name currently assigned
+	 * @return
+	 */
+	public String getPortName(){
+		return serialPort.getPortName();
+	}
 	
 	/**
 	 * Get String array list of serial ports in the system
 	 * @return
 	 */
-	public String[] getSerialPortList(){;
+	public String[] getSerialPortList(){	
 		return serialPortList;
 	}
+
 	
 	/**
 	 * Open port corresponding to this.portID
+	 * Set default serialport params and baudrate as defined in UsbDevice constructor
 	 * @return true if port opened successfully
 	 */
 	public boolean openPort(){
-		if(!serialPort.isOpened()){
-			System.out.println("Trying to open port " + portID);
-			try {
-				serialPort.openPort();
-				return true;
-			} catch (SerialPortException e) {
-				System.out.println("UsbDevice openPort(): Unableto open port");
-				e.printStackTrace();
-			}
+		try{
+			serialPort.openPort();
+			serialPort.setParams(baudRate,
+					SerialPort.DATABITS_8,
+					SerialPort.STOPBITS_1,
+					SerialPort.PARITY_NONE);
+			isOpen = true;
+			System.out.println("UsbDevice:\nopen(): Port defined and opened without error: " + portID);
+			return true;
+		}catch(SerialPortException e) {
+			isOpen = false;
+			System.out.println("UsbDevice:\nopen():Unable to open port: " + portID + "\n" + e);
 			return false;
 		}
-		System.out.println("UsbDevice openPort(): Port " + portID + " is already open");
-		return true;
 	}
 
 	/**
 	 * Close port corresponding to this.portID
 	 * @return true if port closes successfully
 	 */
-	public boolean closePort(){
+	public boolean close(){
 		if(serialPort.isOpened()){
 			try {
 				serialPort.closePort();
+				System.out.println("UsbDevice:\nclose(): port closed with out error");
+				isOpen = false;
 				return true;
 			} catch (SerialPortException e) {
-				System.out.println("\nUsbDevice closePort():Error closing port");
+				System.out.println("\nUsbDevice:\nclosePort():Error closing port");
 				e.printStackTrace();
 			}
 		}
+		isOpen = false;
 		return false;
 	}
-	
+
 	/**
 	 * Check if this.serialPort is open
 	 * @return true if port is open
@@ -182,11 +186,12 @@ public class UsbDevice {
 		}
 		return false;
 	}
-	
-	private SerialPort serialPort;
+
+	public static SerialPort serialPort;
 	private String[] serialPortList;
 	private String portID;
-	
-	
+	private boolean isOpen;
+	private int baudRate;
+
 
 }
