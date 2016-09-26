@@ -10,6 +10,8 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+
+import jssc.SerialPortException;
 import jssc_usb.UsbDevice;
 
 /**
@@ -20,6 +22,7 @@ public class SettingsPortSelectionView extends JPanel{
 
 	/**
 	 * Constructor defines panel components
+	 * @throws SerialPortException 
 	 */
 	public SettingsPortSelectionView() {
 		initUI();
@@ -28,6 +31,7 @@ public class SettingsPortSelectionView extends JPanel{
 
 	/**
 	 * Initialize UI Elements of Port Selection View
+	 * @throws SerialPortException 
 	 */
 	private void initUI(){
 		//Panel for storing label 'Select Port'
@@ -48,9 +52,7 @@ public class SettingsPortSelectionView extends JPanel{
 		comboBoxPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		comboBoxPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 5));
 		//get list of current available ports and add them to JComboBox
-		usbDevice = new UsbDevice();
-		portList = usbDevice.getSerialPortList();
-		portOptionsDropDown = new JComboBox<String>(portList);
+		portOptionsDropDown = new JComboBox<String>(UsbDevice.findSerialPorts());
 		portOptionsDropDown.setPreferredSize(new Dimension(COMBO_BOX_WIDTH, portOptionsDropDown.getPreferredSize().height));
 		portOptionsDropDown.setMaximumSize(new Dimension(COMBO_BOX_WIDTH, portOptionsDropDown.getPreferredSize().height));
 		portOptionsDropDown.setMinimumSize(new Dimension(COMBO_BOX_WIDTH, portOptionsDropDown.getPreferredSize().height));
@@ -98,9 +100,10 @@ public class SettingsPortSelectionView extends JPanel{
 	 * Update JComboBox with active port list
 	 */
 	public void refreshPortList(){
-		portList = usbDevice.getSerialPortList();
+		portList = UsbDevice.findSerialPorts();
 		portOptionsDropDown.removeAllItems();
 		for(int i = 0; i < portList.length; i++){
+			System.out.println(portList[i]);
 			portOptionsDropDown.addItem(portList[i]);
 		}
 
@@ -120,7 +123,6 @@ public class SettingsPortSelectionView extends JPanel{
 	private JComboBox<String> portOptionsDropDown;
 	private JPanel refreshButtonPanel;
 	private JButton refreshPortsButton;
-	private UsbDevice usbDevice;
 	private String[] portList;
 	private final int LABEL_WIDTH = 70;
 	private final int COMBO_BOX_WIDTH = 100;
