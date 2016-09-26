@@ -8,18 +8,30 @@ package connection_settings_ui.model;
 public class ConnectionSettingsModel {
 
 	public ConnectionSettingsModel() {
-		baudRate = defaultBaudRate;
-		feedRate = defaultFeedRate;
-		width = defaultWidth;
-		depth = defaultDepth;
-		height = defaultHeight;
+		baudRate = DEF_BAUD;
+		feedRate = DEF_FEED_RATE;
+		width = DEF_WIDTH;
+		depth = DEF_DEPTH;
+		height = DEF_HEIGHT;
+		stepSize = DEF_STEP_SIZE;
 		connected = false;
 	}
 	
+	/**
+	 * Restore all values to default
+	 */
+	public void restoreDefaultValues(){
+		baudRate = DEF_BAUD;
+		feedRate = DEF_FEED_RATE;
+		width = DEF_WIDTH;
+		depth = DEF_DEPTH;
+		height = DEF_HEIGHT;
+		stepSize = DEF_STEP_SIZE;
+	}
 	
 	/**
 	 * Get Baud Rate
-	 * @return
+	 * @return int baudrate
 	 */
 	public int getBaudRate() {
 		return baudRate;
@@ -33,7 +45,7 @@ public class ConnectionSettingsModel {
 	}
 	/**
 	 * Get Feed Rate
-	 * @return
+	 * @return int feed rate
 	 */
 	public int getFeedRate() {
 		return feedRate;
@@ -47,7 +59,7 @@ public class ConnectionSettingsModel {
 	}
 	/**
 	 * Get Workspace Width (X)
-	 * @return
+	 * @return int workspace width
 	 */
 	public int getWidth() {
 		return width;
@@ -61,7 +73,7 @@ public class ConnectionSettingsModel {
 	}
 	/**
 	 * Get Workspace Depth (Y)
-	 * @return
+	 * @return int workspace depth
 	 */
 	public int getDepth() {
 		return depth;
@@ -75,7 +87,7 @@ public class ConnectionSettingsModel {
 	}
 	/**
 	 * Get Workspace Height (Z)
-	 * @return
+	 * @return int workspace height
 	 */
 	public int getHeight() {
 		return height;
@@ -86,6 +98,20 @@ public class ConnectionSettingsModel {
 	 */
 	public void setHeight(int height) {
 		this.height = height;
+	}
+	/**
+	 * Get step size for jog control
+	 * @param int stepSize
+	 */
+	public void setStepSize(int stepSize){
+		this.stepSize = stepSize;
+	}
+	/**
+	 * Set step size for jog control
+	 * @return int stepsize
+	 */
+	public int getStepSize(){
+		return this.stepSize;
 	}
 	/**
 	 * Return connection status
@@ -107,7 +133,7 @@ public class ConnectionSettingsModel {
 	 * @return
 	 */
 	public int getDefaultBaudRate() {
-		return defaultBaudRate;
+		return DEF_BAUD;
 	}
 
 	/**
@@ -115,7 +141,7 @@ public class ConnectionSettingsModel {
 	 * @return
 	 */
 	public int getDefaultFeedRate() {
-		return defaultFeedRate;
+		return DEF_FEED_RATE;
 	}
 	
 	/**
@@ -123,7 +149,7 @@ public class ConnectionSettingsModel {
 	 * @return
 	 */
 	public int getDefaultWidth() {
-		return defaultWidth;
+		return DEF_WIDTH;
 	}
 
 	/**
@@ -131,7 +157,7 @@ public class ConnectionSettingsModel {
 	 * @return
 	 */
 	public int getDefaultDepth() {
-		return defaultDepth;
+		return DEF_DEPTH;
 	}
 
 	/**
@@ -139,21 +165,25 @@ public class ConnectionSettingsModel {
 	 * @return
 	 */
 	public int getDefaultHeight() {
-		return defaultHeight;
+		return DEF_HEIGHT;
 	}
 
 
+	
 
 	private int baudRate;
 	private int feedRate;
 	private int width;
 	private int depth;
 	private int height;
-	private final int defaultBaudRate = 9600;
-	private final int defaultFeedRate = 0;
-	private final int defaultWidth = 500;
-	private final int defaultDepth = 500;
-	private final int defaultHeight = 50;
+	private int stepSize;
 	private boolean connected;
+	public static final int DEF_BAUD = 9600;
+	public static final int DEF_FEED_RATE = 0;
+	public static final int DEF_WIDTH = 500;
+	public static final int DEF_DEPTH = 500;
+	public static final int DEF_HEIGHT = 50;
+	public static final int DEF_STEP_SIZE = 10;
+	
 	
 }
