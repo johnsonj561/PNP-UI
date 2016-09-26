@@ -35,11 +35,14 @@ public class ManageConnectionButtonsView extends JPanel{
 		buttonsPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 5));
 		buttonsPanel.setAlignmentX(JPanel.LEFT_ALIGNMENT);
 		connectToDeviceButton = new JButton("Connect To Device");
+		saveSettingsButton = new JButton("Save Settings");
 		restoreDefaultsButton = new JButton("Restore Defaults");
-		buttonsPanel.add(connectToDeviceButton);
+		buttonsPanel.add(saveSettingsButton);
 		buttonsPanel.add(Box.createRigidArea(new Dimension(15, 0)));
 		buttonsPanel.add(restoreDefaultsButton);
-		
+		buttonsPanel.add(Box.createRigidArea(new Dimension(15, 0)));
+		buttonsPanel.add(connectToDeviceButton);
+	
 		//description panel to display connection status
 		connectionStatusPanel = new JPanel();
 		connectionStatusPanel.setLayout(new BoxLayout(connectionStatusPanel, BoxLayout.X_AXIS));
@@ -77,6 +80,7 @@ public class ManageConnectionButtonsView extends JPanel{
 	private JPanel connectionStatusPanel;
 	public JButton connectToDeviceButton;
 	public JButton restoreDefaultsButton;
+	public JButton saveSettingsButton;
 	private String status;
 	private JLabel connectionStatusLabel;
 }
