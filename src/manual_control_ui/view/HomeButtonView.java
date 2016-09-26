@@ -66,11 +66,11 @@ public class HomeButtonView extends JPanel{
 	 * Class Variables
 	 */
 	private JPanel homeButtonPanel;
-	private JButton homeXButton;
-	private JButton homeYButton;
-	private JButton homeZButton;
-	private JPanel zeroButtonPanel;
-	private JButton zeroXButton;
-	private JButton zeroYButton;
-	private JButton zeroZButton;
+	public JButton homeXButton;
+	public JButton homeYButton;
+	public JButton homeZButton;
+	public JPanel zeroButtonPanel;
+	public JButton zeroXButton;
+	public JButton zeroYButton;
+	public JButton zeroZButton;
 }
