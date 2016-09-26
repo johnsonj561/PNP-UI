@@ -2,6 +2,8 @@ package connection_settings_ui.controller;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
+
+import jssc.SerialPortException;
 import connection_settings_ui.model.ConnectionSettingsModel;
 import connection_settings_ui.view.ManageConnectionButtonsView;
 import connection_settings_ui.view.SettingsInputTextView;
@@ -17,10 +19,10 @@ public class ConnectionSettingsController extends JPanel{
 
 	/**
 	 * Constructor builds all PNP Connection Setting views
+	 * @throws SerialPortException 
 	 */
-	public ConnectionSettingsController(){
+	public ConnectionSettingsController() throws SerialPortException{
 		//initialize settings to default values
-		settingsData = new ConnectionSettingsModel();
 		//initialize UI
 		initUI();
 	}
@@ -28,6 +30,7 @@ public class ConnectionSettingsController extends JPanel{
 	/**
 	 * Initialize Connection Settings Panel UI Elements
 	 * Includes: Workspace dimensions, Connection Settings, Connect/Disconnect Buttons
+	 * @throws SerialPortException 
 	 */
 	private void initUI(){
 		//Dimensions Title
@@ -36,26 +39,26 @@ public class ConnectionSettingsController extends JPanel{
 		//width input
 		platformWidthInput = new SettingsInputTextView("Width", "Width (X) of machine workspace (mm)");
 		platformWidthInput.setAlignmentX(JPanel.LEFT_ALIGNMENT);
-		platformWidthInput.setInputText(settingsData.getWidth() + "");
+		platformWidthInput.setInputText(ConnectionSettingsModel.DEF_WIDTH + "");
 		//depth input
 		platformDepthInput = new SettingsInputTextView("Depth", "Depth (Y) of machine workspace (mm)");
 		platformDepthInput.setAlignmentX(JPanel.LEFT_ALIGNMENT);
-		platformDepthInput.setInputText(settingsData.getDepth() + "");
+		platformDepthInput.setInputText(ConnectionSettingsModel.DEF_DEPTH + "");
 		//height input
 		platformHeightInput = new SettingsInputTextView("Height", "Height (Z) of machine workspace (mm)");
 		platformHeightInput.setAlignmentX(JPanel.LEFT_ALIGNMENT);
-		platformHeightInput.setInputText(settingsData.getHeight() + "");
+		platformHeightInput.setInputText(ConnectionSettingsModel.DEF_HEIGHT + "");
 		//Connections Settings Title
 		connectionSettingsTitle = new SettingsTitleView("Connection Settings");
 		connectionSettingsTitle.setAlignmentX(JPanel.LEFT_ALIGNMENT);
 		//baud rate
 		baudRateInput = new SettingsInputTextView("Baud Rate", "Communication Speed (bps) typically 57600, 9600, or 115200");
 		baudRateInput.setAlignmentX(JPanel.LEFT_ALIGNMENT);
-		baudRateInput.setInputText(settingsData.getBaudRate() + "");
+		baudRateInput.setInputText(ConnectionSettingsModel.DEF_BAUD + "");
 		//feed rate
 		feedRateInput = new SettingsInputTextView("Feed Rate", "Required for Jog controls (mm/min)");
 		feedRateInput.setAlignmentX(JPanel.LEFT_ALIGNMENT);
-		feedRateInput.setInputText(settingsData.getFeedRate() + "");
+		feedRateInput.setInputText(ConnectionSettingsModel.DEF_FEED_RATE + "");
 		//port selection
 		portSelectionInput = new SettingsPortSelectionView();
 		portSelectionInput.setAlignmentX(JPanel.LEFT_ALIGNMENT);
@@ -63,13 +66,8 @@ public class ConnectionSettingsController extends JPanel{
 		connectionStatusTitle = new SettingsTitleView("Connection Status");
 		connectionStatusTitle.setAlignmentX(JPanel.LEFT_ALIGNMENT);
 		//connection buttons
-		connectionButtons = new ManageConnectionButtonsView("Disconnected from PNP machine. Click 'Connect To Device' to begin.");
-		connectionButtons.setAlignmentX(JPanel.LEFT_ALIGNMENT);
-		
-		
-		//TODO add Button to connect device!
-		
-		
+		connectionButtons = new ManageConnectionButtonsView("Disconnected From PNP Machine: Connect to a device to begin");
+		connectionButtons.setAlignmentX(JPanel.LEFT_ALIGNMENT);		
 		//Add individual components to this.JPanel for final display, laid on vertically along y Axis
 		this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		this.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));
@@ -86,14 +84,103 @@ public class ConnectionSettingsController extends JPanel{
 	}
 
 	/**
+	 * Return workspace width defined by user
+	 * @return String workspace width (X)
+	 */
+	public int getPlatformWidth(){
+		return platformWidthInput.getInputAsInt();
+	}
+	
+	/**
+	 * Update input field with new width
+	 * @param width
+	 */
+	public void setPlatformWidth(int width){
+		platformWidthInput.setInputText(width + "");
+	}
+	
+	/**
+	 * Return workspace depth defined by user
+	 * @return String workspace depth (Y)
+	 */
+	public int getPlatformDepth(){
+		return platformDepthInput.getInputAsInt();
+	}
+	
+	/**
+	 * Update input field with new depth
+	 * @param depth
+	 */
+	public void setPlatformDepth(int depth){
+		platformDepthInput.setInputText(depth + "");
+	}
+	
+	/**
+	 * Return workspace height defined by user
+	 * @return String workspace height (Z)
+	 */
+	public int getPlatformHeight(){
+		return platformHeightInput.getInputAsInt();
+	}
+	
+	/**
+	 * Update input field with new height
+	 * @param width
+	 */
+	public void setPlatformHeight(int height){
+		platformHeightInput.setInputText(height + "");
+	}
+	
+	/**
+	 * Return Baud rate defined by user
+	 * @return String baud rate
+	 */
+	public int getBaudRate(){
+		return baudRateInput.getInputAsInt();
+	}
+	
+	/**
+	 * Update input field with new baud rate
+	 * @param baudRate
+	 */
+	public void setBaudRate(int baudRate){
+		baudRateInput.setInputText(baudRate + "");
+	}
+	
+	/**
+	 * Return Feed Rate defined by user
+	 * @return String feed rate
+	 */
+	public int getFeedRate(){
+		return feedRateInput.getInputAsInt();
+	}
+	
+	/**
+	 * Update input field with new feedrate
+	 * @param feedrate
+	 */
+	public void setFeedRate(int feedrate){
+		feedRateInput.setInputText(feedrate + "");
+	}
+	
+	/**
+	 * Update connection status to be displayed to user
+	 * @param status
+	 */
+	public void setConnectionStatus(String status){
+		connectionButtons.updateConnectionStatus(status);
+	}
+	
+	/**
 	 * Default serial version UID
 	 */
 	private static final long serialVersionUID = 1L;
 
+	
+	
 	/**
 	 * Class variables
 	 */
-	public ConnectionSettingsModel settingsData;
 	private SettingsTitleView dimensionsTitle;
 	private SettingsInputTextView platformWidthInput;
 	private SettingsInputTextView platformDepthInput;
@@ -102,6 +189,6 @@ public class ConnectionSettingsController extends JPanel{
 	private SettingsTitleView connectionStatusTitle;
 	private SettingsInputTextView baudRateInput;
 	private SettingsInputTextView feedRateInput;
-	private SettingsPortSelectionView portSelectionInput;
-	private ManageConnectionButtonsView connectionButtons;
+	public SettingsPortSelectionView portSelectionInput;
+	public ManageConnectionButtonsView connectionButtons;
 }
