@@ -49,11 +49,11 @@ public class AltiumSMTComponent extends SMTComponent{
 	}
 	
 	/**
-	 * Removes units from end of dimesion/size values
+	 * Removes units from end of dimension/size values
 	 */
 	private void stripUnits(){
 		for(int i = 2; i < attributeList.length; i++){
-			attributeList[i].replace("mil", " ");
+			attributeList[i] = attributeList[i].replace("mil", " ");
 		}
 	}
 
