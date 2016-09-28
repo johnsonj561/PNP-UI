@@ -229,8 +229,22 @@ public class PNPMainController extends JPanel {
 						sendMessage(ZERO_Z);
 					}
 				});
-
-
+		//connection page emergency stop button
+		manualController.jogButtonView.emergencyStopPanel.emergencyStopButton.addActionListener(
+				new ActionListener() {
+					@Override
+					public void actionPerformed(ActionEvent e) {
+						emergencyStop();
+					}
+				});
+		//manual control emergency stop button
+		connectionSettingsController.emergencyStopPanel.emergencyStopButton.addActionListener(
+				new ActionListener() {
+					@Override
+					public void actionPerformed(ActionEvent e) {
+						emergencyStop();
+					}
+				});
 	}
 
 	/**
@@ -257,8 +271,8 @@ public class PNPMainController extends JPanel {
 		JFrame frame = new JFrame("Pic N Place");
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		//set preferred size, min size, and window start up position
-		frame.setPreferredSize(new Dimension(850, 700));
-		frame.setMinimumSize(new Dimension(700, 600));
+		frame.setPreferredSize(new Dimension(700, 700));
+		frame.setMinimumSize(new Dimension(700, 700));
 		//create TabbedController object and add to frame
 		//Note - TabbedController handles the initialization of individual views/panels
 		frame.add(new PNPMainController(), BorderLayout.CENTER);
@@ -394,6 +408,17 @@ public class PNPMainController extends JPanel {
 		}	
 	}
 
+	/**
+	 * Stops machine's current operation
+	 * @return true if stop procedure was successful
+	 */
+	private boolean emergencyStop(){
+		//TODO define emergency stop
+		//stop machine and store current location and operation?
+		//stop machine after current operation is complete?
+		return true;
+	}
+	
 	private void restoreDefaults(){
 		//update our settings data model with defaults
 		connectionSettings.restoreDefaultValues();

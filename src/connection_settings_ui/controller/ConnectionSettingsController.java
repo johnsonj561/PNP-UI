@@ -1,7 +1,12 @@
 package connection_settings_ui.controller;
+import java.awt.Dimension;
+
 import javax.swing.BorderFactory;
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
+
+import manual_control_ui.view.EmergencyStopView;
 
 import jssc.SerialPortException;
 import connection_settings_ui.model.ConnectionSettingsModel;
@@ -62,12 +67,33 @@ public class ConnectionSettingsController extends JPanel{
 		//port selection
 		portSelectionInput = new SettingsPortSelectionView();
 		portSelectionInput.setAlignmentX(JPanel.LEFT_ALIGNMENT);
+
+
+
 		//Connection Status Title
 		connectionStatusTitle = new SettingsTitleView("Connection Status");
 		connectionStatusTitle.setAlignmentX(JPanel.LEFT_ALIGNMENT);
 		//connection buttons
 		connectionButtons = new ManageConnectionButtonsView("Disconnected From PNP Machine: Connect to a device to begin");
 		connectionButtons.setAlignmentX(JPanel.LEFT_ALIGNMENT);		
+		//create panel to package Connection Status and Connection Buttons
+		connectionButtonPanel = new JPanel();
+		connectionButtonPanel.setLayout(new BoxLayout(connectionButtonPanel, BoxLayout.Y_AXIS));
+		connectionButtonPanel.add(connectionStatusTitle);
+		connectionButtonPanel.add(connectionButtons);
+	
+		//emergency stop panel
+		emergencyStopPanel = new EmergencyStopView();
+		emergencyStopPanel.setAlignmentX(JPanel.LEFT_ALIGNMENT);
+		
+		//create panel to package connection status/buttons and emergency stop button
+		connectionButtonAndEmergencyStopPanel = new JPanel();
+		connectionButtonAndEmergencyStopPanel.setLayout(new BoxLayout(connectionButtonAndEmergencyStopPanel, BoxLayout.X_AXIS));
+		connectionButtonAndEmergencyStopPanel.setAlignmentX(JPanel.LEFT_ALIGNMENT);
+		connectionButtonAndEmergencyStopPanel.add(connectionButtonPanel);
+		connectionButtonAndEmergencyStopPanel.add(Box.createRigidArea(new Dimension(50, 0)));
+		connectionButtonAndEmergencyStopPanel.add(emergencyStopPanel);
+
 		//Add individual components to this.JPanel for final display, laid on vertically along y Axis
 		this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		this.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));
@@ -79,8 +105,7 @@ public class ConnectionSettingsController extends JPanel{
 		this.add(baudRateInput);
 		this.add(feedRateInput);
 		this.add(portSelectionInput);
-		this.add(connectionStatusTitle);
-		this.add(connectionButtons);
+		this.add(connectionButtonAndEmergencyStopPanel);
 	}
 
 	/**
@@ -90,7 +115,7 @@ public class ConnectionSettingsController extends JPanel{
 	public int getPlatformWidth(){
 		return platformWidthInput.getInputAsInt();
 	}
-	
+
 	/**
 	 * Update input field with new width
 	 * @param width
@@ -98,7 +123,7 @@ public class ConnectionSettingsController extends JPanel{
 	public void setPlatformWidth(int width){
 		platformWidthInput.setInputText(width + "");
 	}
-	
+
 	/**
 	 * Return workspace depth defined by user
 	 * @return String workspace depth (Y)
@@ -106,7 +131,7 @@ public class ConnectionSettingsController extends JPanel{
 	public int getPlatformDepth(){
 		return platformDepthInput.getInputAsInt();
 	}
-	
+
 	/**
 	 * Update input field with new depth
 	 * @param depth
@@ -114,7 +139,7 @@ public class ConnectionSettingsController extends JPanel{
 	public void setPlatformDepth(int depth){
 		platformDepthInput.setInputText(depth + "");
 	}
-	
+
 	/**
 	 * Return workspace height defined by user
 	 * @return String workspace height (Z)
@@ -122,7 +147,7 @@ public class ConnectionSettingsController extends JPanel{
 	public int getPlatformHeight(){
 		return platformHeightInput.getInputAsInt();
 	}
-	
+
 	/**
 	 * Update input field with new height
 	 * @param width
@@ -130,7 +155,7 @@ public class ConnectionSettingsController extends JPanel{
 	public void setPlatformHeight(int height){
 		platformHeightInput.setInputText(height + "");
 	}
-	
+
 	/**
 	 * Return Baud rate defined by user
 	 * @return String baud rate
@@ -138,7 +163,7 @@ public class ConnectionSettingsController extends JPanel{
 	public int getBaudRate(){
 		return baudRateInput.getInputAsInt();
 	}
-	
+
 	/**
 	 * Update input field with new baud rate
 	 * @param baudRate
@@ -146,7 +171,7 @@ public class ConnectionSettingsController extends JPanel{
 	public void setBaudRate(int baudRate){
 		baudRateInput.setInputText(baudRate + "");
 	}
-	
+
 	/**
 	 * Return Feed Rate defined by user
 	 * @return String feed rate
@@ -154,7 +179,7 @@ public class ConnectionSettingsController extends JPanel{
 	public int getFeedRate(){
 		return feedRateInput.getInputAsInt();
 	}
-	
+
 	/**
 	 * Update input field with new feedrate
 	 * @param feedrate
@@ -162,7 +187,7 @@ public class ConnectionSettingsController extends JPanel{
 	public void setFeedRate(int feedrate){
 		feedRateInput.setInputText(feedrate + "");
 	}
-	
+
 	/**
 	 * Update connection status to be displayed to user
 	 * @param status
@@ -170,14 +195,14 @@ public class ConnectionSettingsController extends JPanel{
 	public void setConnectionStatus(String status){
 		connectionButtons.updateConnectionStatus(status);
 	}
-	
+
 	/**
 	 * Default serial version UID
 	 */
 	private static final long serialVersionUID = 1L;
 
-	
-	
+
+
 	/**
 	 * Class variables
 	 */
@@ -189,6 +214,9 @@ public class ConnectionSettingsController extends JPanel{
 	private SettingsTitleView connectionStatusTitle;
 	private SettingsInputTextView baudRateInput;
 	private SettingsInputTextView feedRateInput;
+	public EmergencyStopView emergencyStopPanel;
+	private JPanel connectionButtonPanel;
+	private JPanel connectionButtonAndEmergencyStopPanel;
 	public SettingsPortSelectionView portSelectionInput;
 	public ManageConnectionButtonsView connectionButtons;
 }

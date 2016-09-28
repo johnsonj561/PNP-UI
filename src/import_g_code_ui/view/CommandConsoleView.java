@@ -2,6 +2,8 @@ package import_g_code_ui.view;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Font;
+
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -52,6 +54,8 @@ public class CommandConsoleView extends JPanel{
 		pauseJobButton.setEnabled(false);
 		//clear button functionality
 		stopJobButton = new JButton("Terminate");
+		stopJobButton.setForeground(Color.RED);
+		stopJobButton.setFont(new Font("Verdana", Font.BOLD, 13));
 		stopJobButton.setEnabled(false);
 		//add buttons to button panel
 		buttonsPanel.add(startJobButton);

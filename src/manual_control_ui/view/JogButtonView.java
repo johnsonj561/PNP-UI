@@ -37,7 +37,7 @@ public class JogButtonView extends JPanel{
 			System.out.println("JogXYBUttonView:\ninitUI(): Error initializing JButton Image Icons");
 			e.printStackTrace();
 		}
-		
+
 		//create 3x3 grid to display to display XZ Jog Buttons at N S E W cells
 		jogXYPanel = new JPanel();
 		jogXYPanel.setLayout(new GridLayout(3, 3, 10, 10));
@@ -53,15 +53,19 @@ public class JogButtonView extends JPanel{
 		jogZPanel.setMinimumSize(new Dimension(50,185));
 		jogZPanel.setMaximumSize(new Dimension(50,185));
 		jogZPanel.setPreferredSize(new Dimension(50,185));
-	
-		//create 3x1 gridto display spindle rotation controls
+
+		//create 3x1 grid to display spindle rotation controls
 		spindlePanel = new JPanel();
 		spindlePanel.setLayout(new GridLayout(3, 1, 10, 10));
 		//spindlePanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 		spindlePanel.setMinimumSize(new Dimension(50,185));
 		spindlePanel.setMaximumSize(new Dimension(50,185));
 		spindlePanel.setPreferredSize(new Dimension(50,185));
-		
+
+		//create BoxLayout panel to display emergency stop button
+		emergencyStopPanel = new EmergencyStopView();
+		emergencyStopPanel.setLayout(new BoxLayout(emergencyStopPanel, BoxLayout.X_AXIS));
+
 		//initialize buttons
 		jogZMinusButton = new JButton(new ImageIcon(jogZMinusImage));
 		jogZPlusButton = new JButton(new ImageIcon(jogZPlusImage));
@@ -71,7 +75,7 @@ public class JogButtonView extends JPanel{
 		jogYPlusButton = new JButton(new ImageIcon(jogYPlusImage));
 		spindleCWButton = new JButton(new ImageIcon(spindleCWImage));
 		spindleCCWButton = new JButton(new ImageIcon(spindleCCWImage));
-		
+
 		//add elements to this layout
 		this.setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
 		this.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -80,6 +84,8 @@ public class JogButtonView extends JPanel{
 		this.add(jogZPanel);
 		this.add(Box.createRigidArea(new Dimension(30, 0)));
 		this.add(spindlePanel);
+		this.add(Box.createRigidArea(new Dimension(100, 0)));
+		this.add(emergencyStopPanel);
 	}
 
 	/**
@@ -145,4 +151,5 @@ public class JogButtonView extends JPanel{
 	private Image jogZPlusImage;
 	private Image spindleCWImage;
 	private Image spindleCCWImage;
+	public EmergencyStopView emergencyStopPanel;
 }
