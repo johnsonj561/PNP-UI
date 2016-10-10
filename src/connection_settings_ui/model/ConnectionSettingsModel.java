@@ -179,10 +179,10 @@ public class ConnectionSettingsModel {
 	private int stepSize;
 	private boolean connected;
 	public static final int DEF_BAUD = 9600;
-	public static final int DEF_FEED_RATE = 0;
-	public static final int DEF_WIDTH = 500;
-	public static final int DEF_DEPTH = 500;
-	public static final int DEF_HEIGHT = 50;
+	public static final int DEF_FEED_RATE = 1000;
+	public static final int DEF_WIDTH = 450;
+	public static final int DEF_DEPTH = 450;
+	public static final int DEF_HEIGHT = 100;
 	public static final int DEF_STEP_SIZE = 10;
 	
 	
