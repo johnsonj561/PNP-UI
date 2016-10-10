@@ -31,30 +31,20 @@ public class HomeButtonView extends JPanel{
 		homeXButton = new JButton("X Home");
 		homeYButton = new JButton("Y Home");
 		homeZButton = new JButton("Z Home");
+		homeAllButton = new JButton("Home All");
+		homeButtonPanel.add(homeAllButton);
+		homeButtonPanel.add(Box.createRigidArea(new Dimension(50, 0)));
 		homeButtonPanel.add(homeXButton);
-		homeButtonPanel.add(Box.createRigidArea(new Dimension(60, 0)));
+		homeButtonPanel.add(Box.createRigidArea(new Dimension(50, 0)));
 		homeButtonPanel.add(homeYButton);
-		homeButtonPanel.add(Box.createRigidArea(new Dimension(60, 0)));
+		homeButtonPanel.add(Box.createRigidArea(new Dimension(50, 0)));
 		homeButtonPanel.add(homeZButton);
 		
-		//Zero button panel
-		zeroButtonPanel = new JPanel();
-		zeroButtonPanel.setLayout(new BoxLayout(zeroButtonPanel, BoxLayout.X_AXIS));
-		zeroButtonPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-		zeroXButton = new JButton(" X Zero ");
-		zeroYButton = new JButton(" Y Zero ");
-		zeroZButton = new JButton(" Z Zero ");
-		zeroButtonPanel.add(zeroXButton);
-		zeroButtonPanel.add(Box.createRigidArea(new Dimension(60, 0)));
-		zeroButtonPanel.add(zeroYButton);
-		zeroButtonPanel.add(Box.createRigidArea(new Dimension(60, 0)));
-		zeroButtonPanel.add(zeroZButton);
 		
 		//add elements to this layout
 		this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		this.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 		this.add(homeButtonPanel);
-		this.add(zeroButtonPanel);
 	}
 
 	/**
@@ -69,8 +59,5 @@ public class HomeButtonView extends JPanel{
 	public JButton homeXButton;
 	public JButton homeYButton;
 	public JButton homeZButton;
-	public JPanel zeroButtonPanel;
-	public JButton zeroXButton;
-	public JButton zeroYButton;
-	public JButton zeroZButton;
+	public JButton homeAllButton;
 }
