@@ -8,7 +8,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Arrays;
 import java.util.List;
-
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JFileChooser;
@@ -71,7 +70,6 @@ public class UploadGCodeController extends JPanel{
 		selectInputView.getFileButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				System.out.println("Button Clicked!");
 				JFileChooser chooser = new JFileChooser();
 				chooser.setCurrentDirectory(new java.io.File("."));
 				chooser.setDialogTitle("Select Input");
@@ -80,6 +78,8 @@ public class UploadGCodeController extends JPanel{
 				if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
 					selectInputView.updateInputPath(chooser.getSelectedFile().toString());
 					setConsoleContent(selectInputView.getFileContent());
+					//highlight first line to be processed
+					gCodeConsoleView.highlightLine(0);
 				} 
 			}
 		});
@@ -128,8 +128,6 @@ public class UploadGCodeController extends JPanel{
 	 * @return String[] containing all lines of G Code found in G Code Console
 	 */
 	public List<String> getConsoleContentArray(){
-		//remove comments
-
 		return Arrays.asList(gCodeConsoleView.getConsoleContent().split("\n"));
 	}
 
@@ -158,8 +156,7 @@ public class UploadGCodeController extends JPanel{
 	private int pauseJob(){
 		//TODO complete current instruction, store pointer so we know where to resume, pause transmission
 		int nextInstruction = 0;
-		gCodeConsoleView.removeFirstLineFromConsole();
-		gCodeConsoleView.highlightLine(0);
+		
 		//change state to paused
 		jobState = PAUSED_STATE;
 		//update button displays
