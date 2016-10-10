@@ -1,4 +1,5 @@
 package pnp_main_controller;
+import g_code_generator_ui.controller.GCodeCommand;
 import g_code_generator_ui.controller.GCodeGeneratorController;
 import import_g_code_ui.controller.UploadGCodeController;
 
@@ -16,6 +17,7 @@ import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+
 import jssc.SerialPortException;
 import jssc_usb.UsbDevice;
 
@@ -37,13 +39,14 @@ public class PNPMainController extends JPanel {
 	 */
 	public PNPMainController() {
 		super(new GridLayout(1, 1));
-		//we initialize machine to 0, 0, 0
+		//initialize connection settings to default values
+		connectionSettings = new ConnectionSettingsModel();
+		//we initialize machine coordinates (X,Y,Z), rotation R, feed rate F
 		this.currentX = 0;
 		this.currentY = 0;
 		this.currentZ = 0;
-		//initialize connection settings to default values
-		connectionSettings = new ConnectionSettingsModel();
-		//initialize UI elements and Button functionality
+		this.currentR = 0;
+		this.currentFeedRate = connectionSettings.getDefaultFeedRate();
 		initUI();
 		initButtons();
 	}
@@ -181,14 +184,24 @@ public class PNPMainController extends JPanel {
 						sendMessage(manualController.getManualInstruction());
 					}
 				});
-		//home x moves PNP to defined home on X
-		manualController.homeButtonView.homeXButton.addActionListener(
+		//home all button returns x-y-z-r to 0 position
+		manualController.homeButtonView.homeAllButton.addActionListener(
 				new ActionListener() {
 					@Override
 					public void actionPerformed(ActionEvent e) {
-						sendMessage(HOME_X);
+						//sendMessage(HOME_ALL);
+						//TODO
 					}
 				});
+
+				//home x moves PNP to defined home on X
+				manualController.homeButtonView.homeXButton.addActionListener(
+						new ActionListener() {
+							@Override
+							public void actionPerformed(ActionEvent e) {
+								sendMessage(HOME_X);
+							}
+						});
 		//home y moves PNP to defined home on Y
 		manualController.homeButtonView.homeYButton.addActionListener(
 				new ActionListener() {
@@ -203,30 +216,6 @@ public class PNPMainController extends JPanel {
 					@Override
 					public void actionPerformed(ActionEvent e) {
 						sendMessage(HOME_Z);
-					}
-				});
-		//zero X moves PNP to X0
-		manualController.homeButtonView.zeroXButton.addActionListener(
-				new ActionListener() {
-					@Override
-					public void actionPerformed(ActionEvent e) {
-						sendMessage(ZERO_X);
-					}
-				});
-		//zero Y moves PNP to Y0
-		manualController.homeButtonView.zeroYButton.addActionListener(
-				new ActionListener() {
-					@Override
-					public void actionPerformed(ActionEvent e) {
-						sendMessage(ZERO_Y);
-					}
-				});
-		//zero Z moves PNP to Z0
-		manualController.homeButtonView.zeroZButton.addActionListener(
-				new ActionListener() {
-					@Override
-					public void actionPerformed(ActionEvent e) {
-						sendMessage(ZERO_Z);
 					}
 				});
 		//connection page emergency stop button
@@ -388,18 +377,34 @@ public class PNPMainController extends JPanel {
 	/**
 	 * Send message to USB device currently connected
 	 * @param message String to be sent to USB Devvice
+	 * @param adjustmentNeeded set true if the current x-y-z coordinates need to be adjusted
 	 * @return true if message sent with out error
 	 */
 	private boolean sendMessage(String message){
+		//don't process message if usb device isn't connected
 		if(usbDevice != null){
-			if(usbDevice.writeMessage(message)){
-				System.out.println("PNPMainController:\nsendMessage(String message): Message sent with out error " +
-						message);
-				return true;
+			//package command into GCodeCommand object
+			GCodeCommand command = new GCodeCommand(message);
+			//if command is valid and current values update without error
+			if(command.isValidCommand() && updateValuesFromCommand(command)){
+				//if message sent successful
+				if(usbDevice.writeMessage(message + "\n")){
+					System.out.println("PNPMainController:\nsendMessage(String message): Message sent with out error " +
+							message);
+					return true;
+				}
+				//else return error
+				else{
+					System.out.println("PNPMainController:\nsendMessage(String message): Error Occurred, Message Not Sent");
+					restorePreviousValues();
+					return false;
+				}
 			}
-			else{
-				return false;
-			}
+			//Command was invalid or error was detected when updating current values
+			System.out.println("PNPMainController:\nsendMessage(String message): Invalid Command Found");
+			System.out.println(message);
+			restorePreviousValues();
+			return false;
 		}
 		else{
 			System.out.println("PNPMainController:\nsendMessage(String message): UsbDevice not initialized");
@@ -408,6 +413,113 @@ public class PNPMainController extends JPanel {
 		}	
 	}
 
+	/**
+	 * Updates PNP Machine's current values for x, y, z, r, f by parsing argument GCodeCommand
+	 * Values are first stored in back up variables using storeCurrentValues(), enabling us to undo any changes
+	 * if an error is detected
+	 * @param command GCodeCommand being used to update current values
+	 * @return false if command is invalid (ie: out of bounds)
+	 */
+	private boolean updateValuesFromCommand(GCodeCommand command){
+		//
+		//TODO IF WE GET A BAD VALUE, WE NEED TO RESTORE PREVIOUS VALUES!
+		//let's store old values first, then if we need to revert them we can easily
+		storeCurrentValues();
+		
+		//G Move Commmands
+		if(command.isgCommand()){
+			//Store X Value
+			if(command.isxMove()){
+				if(command.getxValue() >= 0 && command.getxValue() <= connectionSettings.getWidth()){
+					currentX = command.getxValue();
+					System.out.println("PNPMainController:\nupdateValuesFromCommand(): Updating X Value: " + command.getxValue());
+				}
+				else{
+					System.out.println("PNPMainController:\nupdateValuesFromCommand(): Unable to send" +
+							"\nVerify X dimension is not out of bounds");
+					return false;
+				}
+			}
+			//Store Y Value
+			if(command.isyMove()){
+				if(command.getyValue() >= 0 && command.getyValue() <= connectionSettings.getDepth()){
+					currentY = command.getyValue();
+					System.out.println("PNPMainController:\nupdateValuesFromCommand(): Updating Y Value: " + command.getyValue());
+				}
+				else{
+					System.out.println("PNPMainController:\nupdateValuesFromCommand(): Unable to send" +
+							"\nVerify Y dimension is not out of bounds");
+					return false;
+				}
+			}
+			//Store Z Value
+			if(command.iszMove()){
+				if(command.getzValue() >= 0 && command.getzValue() <= connectionSettings.getHeight()){
+					currentZ = command.getzValue();
+					System.out.println("PNPMainController:\nupdateValuesFromCommand(): Updating Z Value: " + command.getzValue());
+				}
+				else{
+					System.out.println("PNPMainController:\nupdateValuesFromCommand(): Unable to send" +
+							"\nVerify Z dimension is not out of bounds");
+					return false;
+				}
+			}
+			//Store R Value
+			if(command.isrMove()){
+				currentR = command.getrValue();
+				System.out.println("PNPMainController:\nupdateValuesFromCommand(): Updating R Value: " + command.getrValue());
+			}
+		}
+		//Feed Rate Commands
+		if(command.isfCommand()){
+			currentFeedRate = command.getfValue();
+			System.out.println("PNPMainController:\nupdateValuesFromCommand(): Updating Feed Rate: " + command.getfValue());
+		}
+		//M Vacuum Commands
+		if(command.ismCommand()){
+			if(command.ismCommand()){
+				if(command.getmValue() == 10){
+					System.out.println("PNPMainController:\nupdateValuesFromCommand(): Updating Vacuum State: VACUUM ON");
+				}
+				else if(command.getmValue() == 11){
+					System.out.println("PNPMainController:\nupdateValuesFromCommand(): Updating Vacuum State: VACUUM OFF");
+				}
+				else{
+					System.out.println("PNPMainController:\nupdateValuesFromCommand(): Invalid Value Detected for 'M'");
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Stores current values for X, Y, Z, R, and F in back up variables
+	 * To be used in case error is detected and values need to be restored
+	 */
+	private void storeCurrentValues(){
+		System.out.println("PNPMainController:\nBacking up current values");
+		previousX = currentX;
+		previousY = currentY;
+		previousZ = currentZ;
+		previousR = currentR;
+		previousFeedRate = currentFeedRate;
+	}
+	
+	/**
+	 * Restore values for X, Y, Z, R, and F from previous instruction. 
+	 * To be used after a transmission error that failed.
+	 * Example) currentX = previousX
+	 */
+	private void restorePreviousValues(){
+		System.out.println("PNPMainController:\nrestorePreviousValues(): transmission failed, restoring values");
+		currentX = previousX;
+		currentY = previousY;
+		currentZ = previousZ;
+		currentR = previousR;
+		currentFeedRate = previousFeedRate;
+	}
+	
 	/**
 	 * Stops machine's current operation
 	 * @return true if stop procedure was successful
@@ -418,7 +530,7 @@ public class PNPMainController extends JPanel {
 		//stop machine after current operation is complete?
 		return true;
 	}
-	
+
 	private void restoreDefaults(){
 		//update our settings data model with defaults
 		connectionSettings.restoreDefaultValues();
@@ -435,47 +547,18 @@ public class PNPMainController extends JPanel {
 	 * Jog machine in positive Y direction
 	 */
 	private void jogYPlus(){
-		currentY += manualController.getStepSize();
-		if(currentY <= connectionSettings.getDepth() && currentY >= 0){
-			if(sendMessage("G1 Y" + currentY + "\n")){
-				System.out.println("PNPMainController:\nJog Y Plus Button: " + 
-						"Jog Y To " + currentY);
-				return;
-			}
-			else{
-				System.out.println("PNPMainController:\nJog Y Plus Button: Message not sent");
-			}
-		}
-		else{
-			System.out.println("PNPMainController:\nJog Y Plus Button: " +
-					" Unable to jog, check workspace dimensions");
-		}
-		//UNDO jog calculation because message was not sent
-		currentY -= manualController.getStepSize();
+		double jogYPosition = currentY + manualController.getStepSize();
+		sendMessage("G1 Y" + jogYPosition);
 	}
 
 	/**
 	 * Jog machine in negative Y direction
 	 */
 	private void jogYMinus(){
-		currentY -= manualController.getStepSize();
-		if(currentY <= connectionSettings.getDepth() && currentY >= 0){
-			if(sendMessage("G1 Y" + currentY + "\n")){
-				System.out.println("PNPMainController:\nJog Y Minus Button: " + 
-						"Jog Y To " + currentY);
-				return;
-			}
-			else{
-				System.out.println("PNPMainController:\nJog Y Minus Button: Message not sent");
-			}
-		}
-		else{
-			System.out.println("PNPMainController:\nJog Y Minus Button: " +
-					" Unable to jog, check workspace dimensions");
-		}
-		//UNDO jog calculation because message was not sent
-		currentY += manualController.getStepSize();
+		double jogYPosition = currentY - manualController.getStepSize();
+		sendMessage("G1 Y" + jogYPosition);
 	}
+	
 
 	/**
 	 * Jog machine in positive X direction
@@ -483,9 +566,8 @@ public class PNPMainController extends JPanel {
 	private void jogXPlus(){
 		currentX += manualController.getStepSize();
 		if(currentX <= connectionSettings.getWidth() && currentX >= 0){
-			if(sendMessage("G1 X" + currentX + "\n")){
-				System.out.println("PNPMainController:\nJog X Plus Button: " + 
-						"Jog X To " + currentX);
+			if(sendMessage(("G1 X" + currentX))){
+				System.out.println("PNPMainController:\nJog X Plus Button: ");
 				return;
 			}
 			else{
@@ -506,9 +588,8 @@ public class PNPMainController extends JPanel {
 	private void jogXMinus(){
 		currentX -= manualController.getStepSize();
 		if(currentX <= connectionSettings.getWidth() && currentX >= 0){
-			if(sendMessage("G1 X" + currentX + "\n")){
-				System.out.println("PNPMainController:\nJog X Minus Button: " + 
-						"Jog X To " + currentX);
+			if(sendMessage(("G1 X" + currentX))){
+				System.out.println("PNPMainController:\nJog X Minus Button: ");
 				return;
 			}
 			else{
@@ -530,9 +611,8 @@ public class PNPMainController extends JPanel {
 		currentZ += manualController.getStepSize();
 		//TODO check workspace Z dimension and compatibility
 		if(currentZ <= connectionSettings.getHeight() && currentZ >= 0){
-			if(sendMessage("G1 Z" + currentZ + "\n")){
-				System.out.println("PNPMainController:\nJog Z Plus Button: " + 
-						"Jog Z To " + currentZ);
+			if(sendMessage(("G1 Z" + currentZ))){
+				System.out.println("PNPMainController:\nJog Z Plus Button: ");
 				return;
 			}
 			else{
@@ -554,9 +634,8 @@ public class PNPMainController extends JPanel {
 		currentZ -= manualController.getStepSize();
 		//TODO check workspace Z dimension and compatibility
 		if(currentZ <= connectionSettings.getHeight() && currentZ >= 0){
-			if(sendMessage("G1 Z" + currentZ + "\n")){
-				System.out.println("PNPMainController:\nJog Z Minus Button: " + 
-						"Jog Z To " + currentZ);
+			if(sendMessage(("G1 Z" + currentZ))){
+				System.out.println("PNPMainController:\nJog Z Minus Button: ");
 				return;
 			}
 			else{
@@ -571,28 +650,44 @@ public class PNPMainController extends JPanel {
 		currentZ += manualController.getStepSize();
 	}
 
+
+	
 	/**
 	 * Default Serial Version UID
 	 */
 	private static final long serialVersionUID = 1L;
-	public ConnectionSettingsController connectionSettingsController;
-	public GCodeGeneratorController gCodeGeneratorPanel;
-	public UploadGCodeController importGCodePanel;
-	public ManualController manualController;
+	//different views for user interface
+	private ConnectionSettingsController connectionSettingsController;
+	private GCodeGeneratorController gCodeGeneratorPanel;
+	private UploadGCodeController importGCodePanel;
+	private ManualController manualController;
+	//UsbDevice for communicating to PIC
 	private UsbDevice usbDevice;
+	//Object for storing/manipulating connection settings
 	private ConnectionSettingsModel connectionSettings;
+	//current coordinate positions
 	private double currentX;
 	private double currentY;
 	private double currentZ;
+	private double currentR;
+	private int currentFeedRate;
+	private boolean vacuumOn;
+	//previous coordinate positions for restoring after a failure
+	private double previousX;
+	private double previousY;
+	private double previousZ;
+	private double previousR;
+	private int previousFeedRate;
+	//connection status
 	private final int STATUS_CONNECTED = 1;
 	private final int STATUS_DISCONNECTED = 2;
 	private final int STATUS_CONNECT_ERROR = 3;
 	private final int STATUS_DISCONNECT_ERROR = 4;
 	private final int STATUS_SEND_ERROR = 5;
+	//home commands
 	private final String HOME_X = "G1 X0";
 	private final String HOME_Y = "G1 Y0";
 	private final String HOME_Z = "G1 Z0";
-	private final String ZERO_X = "G1 X0";
-	private final String ZERO_Y = "G1 Y0";
-	private final String ZERO_Z = "G1 Z0";
+	private final String HOME_R = "G1 R0";
+	private final String HOME_ALL = "G28";
 }
