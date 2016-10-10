@@ -4,6 +4,8 @@ import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 
 import connection_settings_ui.view.SettingsTitleView;
+import manual_control_ui.view.CurrentCoordinatesView;
+import manual_control_ui.view.ErrorMessageView;
 import manual_control_ui.view.HomeButtonView;
 import manual_control_ui.view.JogButtonView;
 import manual_control_ui.view.JogSizeSlider;
@@ -37,6 +39,12 @@ public class ManualController extends JPanel{
 		//Step size control
 		jogSizeSliderView = new JogSizeSlider("Step Size");
 		jogSizeSliderView.setAlignmentX(JPanel.LEFT_ALIGNMENT);
+		//current coordinates
+		currentCoordinates = new CurrentCoordinatesView();
+		currentCoordinates.setAlignmentX(JPanel.LEFT_ALIGNMENT);
+		//error message
+		errorMessage = new ErrorMessageView();
+		errorMessage.setAlignmentX(JPanel.LEFT_ALIGNMENT);
 		//Home controls
 		homeTitle = new SettingsTitleView("Home Machine");
 		homeTitle.setAlignmentX(JPanel.LEFT_ALIGNMENT);
@@ -47,14 +55,16 @@ public class ManualController extends JPanel{
 		manualInstructionTitle.setAlignmentX(JPanel.LEFT_ALIGNMENT);
 		manualInstructionView = new ManualInstructionView("Enter G-Code Command: ");
 		manualInstructionView.setAlignmentX(JPanel.LEFT_ALIGNMENT);
-		
-		
+
+
 		//Add individual components to this.JPanel for final display, laid vertically along y Axis
 		this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		this.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));
 		this.add(jogTitle);
 		this.add(jogButtonView);
 		this.add(jogSizeSliderView);
+		this.add(currentCoordinates);
+		this.add(errorMessage);
 		this.add(homeTitle);
 		this.add(homeButtonView);
 		this.add(manualInstructionTitle);
@@ -83,8 +93,43 @@ public class ManualController extends JPanel{
 	public String getManualInstruction(){
 		return manualInstructionView.getInstructionText();
 	}
-	
-	
+
+	/**
+	 * Update current value of X position being displayed to user
+	 * @param String x coordinate
+	 */
+	public void updateCurrentXValue(String x){
+		currentCoordinates.updateXValue(x);
+	}
+
+	/**
+	 * Update current value of Y position being displayed to user
+	 * @param String y coordinate
+	 */
+	public void updateCurrentYValue(String y){
+		currentCoordinates.updateYValue(y);
+	}
+
+	/**
+	 * Update current value of Z position being displayed to user
+	 * @param String z coordinate
+	 */
+	public void updateCurrentZValue(String z){
+		currentCoordinates.updateZValue(z);
+	}
+
+	/**
+	 * Update current value of R position being displayed to user
+	 * @param String r coordinate
+	 */
+	public void updateCurrentRValue(String r){
+		currentCoordinates.updateRValue(r);
+	}
+
+	public void updateErrorMessage(String message){
+		errorMessage.updateErrorMessage(message);
+	}
+
 	/**
 	 * Default Serial Version UID
 	 */
@@ -93,6 +138,8 @@ public class ManualController extends JPanel{
 	/**
 	 * Class variables
 	 */
+	public CurrentCoordinatesView currentCoordinates;
+	ErrorMessageView errorMessage;
 	public JogButtonView jogButtonView;
 	public JogSizeSlider jogSizeSliderView;
 	public HomeButtonView homeButtonView;
@@ -100,5 +147,6 @@ public class ManualController extends JPanel{
 	private SettingsTitleView manualInstructionTitle;
 	private SettingsTitleView jogTitle;
 	private SettingsTitleView homeTitle;
+	
 
 }
