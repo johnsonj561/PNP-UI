@@ -389,6 +389,7 @@ public class PNPMainController extends JPanel {
 			if(command.isValidCommand() && updateValuesFromCommand(command)){
 				//if message sent successful
 				if(usbDevice.writeMessage(message + "\n")){
+					updateManualControllerPositionValues();
 					System.out.println("PNPMainController:\nsendMessage(String message): Message sent with out error " +
 							message);
 					return true;
@@ -413,6 +414,16 @@ public class PNPMainController extends JPanel {
 		}	
 	}
 
+	/**
+	 * Update ManualControllers view with current values
+	 */
+	private void updateManualControllerPositionValues(){
+		manualController.updateCurrentXValue(currentX + "");
+		manualController.updateCurrentYValue(currentY + "");
+		manualController.updateCurrentZValue(currentZ + "");
+		manualController.updateCurrentRValue(currentR + "");
+	}
+	
 	/**
 	 * Updates PNP Machine's current values for x, y, z, r, f by parsing argument GCodeCommand
 	 * Values are first stored in back up variables using storeCurrentValues(), enabling us to undo any changes
@@ -564,90 +575,32 @@ public class PNPMainController extends JPanel {
 	 * Jog machine in positive X direction
 	 */
 	private void jogXPlus(){
-		currentX += manualController.getStepSize();
-		if(currentX <= connectionSettings.getWidth() && currentX >= 0){
-			if(sendMessage(("G1 X" + currentX))){
-				System.out.println("PNPMainController:\nJog X Plus Button: ");
-				return;
-			}
-			else{
-				System.out.println("PNPMainController:\nJog X Plus Button: Message not sent");
-			}
-		}
-		else{
-			System.out.println("PNPMainController:\nJog X Plus Button: " +
-					" Unable to jog, check workspace dimensions");
-		}
-		//UNDO jog calculation because message was not sent
-		currentX -= manualController.getStepSize();
+		double jogXPosition = currentX + manualController.getStepSize();
+		sendMessage("G1 X" + jogXPosition);
 	}
 
 	/**
 	 * Jog machine in negative X direction
 	 */
 	private void jogXMinus(){
-		currentX -= manualController.getStepSize();
-		if(currentX <= connectionSettings.getWidth() && currentX >= 0){
-			if(sendMessage(("G1 X" + currentX))){
-				System.out.println("PNPMainController:\nJog X Minus Button: ");
-				return;
-			}
-			else{
-				System.out.println("PNPMainController:\nJog X Minus Button: Message not sent");
-			}
-		}
-		else{
-			System.out.println("PNPMainController:\nJog X Minus Button: " +
-					" Unable to jog, check workspace dimensions");
-		}
-		//UNDO jog calculation because message was not sent
-		currentX += manualController.getStepSize();
+		double jogXPosition = currentX - manualController.getStepSize();
+		sendMessage("G1 X" + jogXPosition);
 	}
 
 	/**
 	 * Jog machine in positive Z direction
 	 */
 	private void jogZPlus(){
-		currentZ += manualController.getStepSize();
-		//TODO check workspace Z dimension and compatibility
-		if(currentZ <= connectionSettings.getHeight() && currentZ >= 0){
-			if(sendMessage(("G1 Z" + currentZ))){
-				System.out.println("PNPMainController:\nJog Z Plus Button: ");
-				return;
-			}
-			else{
-				System.out.println("PNPMainController:\nJog Z Plus Button: Message not sent");
-			}
-		}
-		else{
-			System.out.println("PNPMainController:\nJog Z Plus Button: " +
-					" Unable to jog, check workspace dimensions");
-		}
-		//UNDO jog calculation because message was not sent
-		currentZ -= manualController.getStepSize();
+		double jogZPosition = currentZ + manualController.getStepSize();
+		sendMessage("G1 Z" + jogZPosition);
 	}
 
 	/**
 	 * Jog machine in negative Z direction
 	 */
 	private void jogZMinus(){
-		currentZ -= manualController.getStepSize();
-		//TODO check workspace Z dimension and compatibility
-		if(currentZ <= connectionSettings.getHeight() && currentZ >= 0){
-			if(sendMessage(("G1 Z" + currentZ))){
-				System.out.println("PNPMainController:\nJog Z Minus Button: ");
-				return;
-			}
-			else{
-				System.out.println("PNPMainController:\nJog Z Minus Button: Message not sent");
-			}
-		}
-		else{
-			System.out.println("PNPMainController:\nJog Z Minus Button: " +
-					" Unable to jog, check workspace dimensions");
-		}
-		//UNDO jog calculation because message was not sent
-		currentZ += manualController.getStepSize();
+		double jogZPosition = currentZ - manualController.getStepSize();
+		sendMessage("G1 Z" + jogZPosition);
 	}
 
 
