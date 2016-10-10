@@ -66,7 +66,7 @@ public class GCodeGenerator {
 	 * Common start up settings include: units, absolute coordinates, home x coord, home y coord, home z coord, baudrate
 	 */
 	public String initializeGCode(){
-		String gCode = "\n;initializeGCode() configures start up settings. See GCodeGenerator.py to change\n";
+		String gCode = ";initializeGCode() configures start up settings. See GCodeGenerator.py to change\n";
 		gCode += "G21; Set units to millimeters\nG90; Set absolute coordinates\nG28 X0 Y0; Home x and y axis\n";
 		gCode += "G21; Set units to millimeters\nG90; Set absolute coordinates\nG28 X0 Y0; Home x and y axis\n";
 		gCode += "G28 Z0; Home Z axis\nG1 F3000; Set feed rate (speed) for first move\n\n";

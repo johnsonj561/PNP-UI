@@ -106,6 +106,7 @@ public class GCodeGeneratorController extends JPanel{
 	 * Generate G Code from input files and write G Code to Editor for display
 	 */
 	private void writeGCodeToEditor(){
+		//check for input paths
 		if(mPartsInput.getInputPath().length() > 0 && mCentroidInput.getInputPath().length() > 0){
 			GCodeGenerator mGCodeGenerator = new GCodeGenerator(
 					mCentroidInput.getInputPath(), mPartsInput.getInputPath(), mProcessInputPanel.getJComboBoxValue());
