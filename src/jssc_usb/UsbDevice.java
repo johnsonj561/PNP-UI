@@ -1,6 +1,8 @@
 package jssc_usb;
 
 import jssc.SerialPort;
+import jssc.SerialPortEvent;
+import jssc.SerialPortEventListener;
 import jssc.SerialPortException;
 import jssc.SerialPortList;
 
@@ -9,7 +11,7 @@ import jssc.SerialPortList;
  * @author Justin Johnson
  *
  */
-public class UsbDevice{
+public class UsbDevice {
 
 	/**
 	 * UsbDevice Constructor gets list of system's current serial ports and initializes portID
@@ -36,7 +38,7 @@ public class UsbDevice{
 	public boolean writeMessage(String message){
 		if(isOpen){
 			try {
-				if(serialPort.writeBytes(message.getBytes())){
+				if(/*serialPort.writeBytes(message.getBytes())*/serialPort.writeString(message)){
 					System.out.println("UsbDevice:\nwriteMessage(): Message sent successful -> " + message);
 					return true;
 				}
@@ -54,22 +56,7 @@ public class UsbDevice{
 		}
 	}
 
-	/**
-	 * Read all available bytes from port
-	 * @return byte[] from port or null if read fails
-	 */
-	public byte[] readMessage(){
-		byte[] message = null;
-		try {
-			message = serialPort.readBytes();
-			System.out.println(message);
-			return message;
-		} catch (SerialPortException e) {
-			System.out.println("UsbDevice serialEvent: Unable to readBytes()");
-			e.printStackTrace();
-			return message;
-		}
-	}
+
 
 	/**
 	 * Update portID to allow for connection for specified device
@@ -146,6 +133,7 @@ public class UsbDevice{
 					SerialPort.DATABITS_8,
 					SerialPort.STOPBITS_1,
 					SerialPort.PARITY_NONE);
+			serialPort.addEventListener(new SerialPortReader());
 			isOpen = true;
 			System.out.println("UsbDevice:\nopen(): Port defined and opened without error: " + portID);
 			return true;
@@ -192,6 +180,43 @@ public class UsbDevice{
 	private String portID;
 	private boolean isOpen;
 	private int baudRate;
+	
 
+	static class SerialPortReader implements SerialPortEventListener{
 
+		String inputBuffer = "";
+		
+		@Override
+		public void serialEvent(SerialPortEvent event) {
+			System.out.println("UsbDevice:SerialPortReader:\nserialevent(event):");
+			if(event.isRXCHAR()){
+				System.out.println("event.isRXCHAR()");
+				
+				readMessage();
+			}
+			
+		}
+		
+		/**
+		 * Read all available bytes from port
+		 * @return byte[] from port or null if read fails
+		 */
+		public String readMessage(){
+			
+			try {
+				System.out.println("SerialPortReader:\nreadMessage():");
+				inputBuffer += serialPort.readString();
+				if(inputBuffer.endsWith("\n")){
+					System.out.println(inputBuffer);
+					inputBuffer = "";
+				}
+				return inputBuffer;
+			} catch (SerialPortException e) {
+				System.out.println("SerialPortReader:\nreadMessage(): Unable to readBytes()");
+				e.printStackTrace();
+				return null;
+			}
+		}
+		
+	}
 }
