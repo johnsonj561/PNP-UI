@@ -38,21 +38,26 @@ public class SelectGCodeInputView extends JPanel{
 		inputFileHeadingPanel = new JPanel();
 		inputFileHeadingPanel.setLayout(new BoxLayout(inputFileHeadingPanel, BoxLayout.X_AXIS));
 		inputFileHeadingPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-		inputFileHeadingPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+		inputFileHeadingPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 0));
 		getFileLabel = new JLabel(heading);
 		inputFileHeadingPanel.add(getFileLabel);
 		//Input file panel
 		getFilePanel = new JPanel();
 		getFilePanel.setLayout(new BoxLayout(getFilePanel, BoxLayout.X_AXIS));
 		getFilePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-		getFilePanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+		getFilePanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 10));
 		inputFileTextField = new JTextField(30);
 		inputFileTextField.setMaximumSize(new Dimension(Integer.MAX_VALUE, inputFileTextField.getPreferredSize().height));
 		getFileButton = new JButton("Browse");
+		validateGCodeButton = new JButton("Validate");
+		validateGCodeButton.setEnabled(false);
 		//add components to panel
 		getFilePanel.add(inputFileTextField);
 		getFilePanel.add(Box.createRigidArea(new Dimension(25, 0)));
 		getFilePanel.add(getFileButton);
+		getFilePanel.add(Box.createRigidArea(new Dimension(25, 0)));
+		getFilePanel.add(validateGCodeButton);
+		//add panel to this layout
 		this.setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
 		this.add(inputFileHeadingPanel);
 		this.add(Box.createRigidArea(new Dimension(25, 0)));
@@ -110,4 +115,5 @@ public class SelectGCodeInputView extends JPanel{
 	private JTextField inputFileTextField;
 	private String heading;
 	public JButton getFileButton;
+	public JButton validateGCodeButton;
 }
