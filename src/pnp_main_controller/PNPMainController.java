@@ -17,9 +17,11 @@ import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.List;
 
 import jssc.SerialPortException;
 import jssc_usb.UsbDevice;
+import jssc_usb.UsbEvent;
 
 /**
  * Main Controller for Pic N Place UI application.
@@ -32,7 +34,7 @@ import jssc_usb.UsbDevice;
  * @author Justin Johnson
  *
  */
-public class PNPMainController extends JPanel {
+public class PNPMainController extends JPanel implements UsbEvent {
 
 	/**
 	 * Constructor configures JTabbedPane to display all PNP Control Panels to user 
@@ -47,6 +49,11 @@ public class PNPMainController extends JPanel {
 		this.currentZ = 0;
 		this.currentR = 0;
 		this.currentFeedRate = connectionSettings.getDefaultFeedRate();
+		//clear to send initialized to false. It will be changed to true if UsbDevice connects w/out error
+		CTS = false;
+		//processingJob set to false
+		//will only be set to true when processing G Code File from ImportGCodeController
+		processingJob = false;
 		initUI();
 		initButtons();
 	}
@@ -193,15 +200,14 @@ public class PNPMainController extends JPanel {
 						//TODO
 					}
 				});
-
-				//home x moves PNP to defined home on X
-				manualController.homeButtonView.homeXButton.addActionListener(
-						new ActionListener() {
-							@Override
-							public void actionPerformed(ActionEvent e) {
-								sendMessage(HOME_X);
-							}
-						});
+		//home x moves PNP to defined home on X
+		manualController.homeButtonView.homeXButton.addActionListener(
+				new ActionListener() {
+					@Override
+					public void actionPerformed(ActionEvent e) {
+						sendMessage(HOME_X);
+					}
+				});
 		//home y moves PNP to defined home on Y
 		manualController.homeButtonView.homeYButton.addActionListener(
 				new ActionListener() {
@@ -234,6 +240,58 @@ public class PNPMainController extends JPanel {
 						emergencyStop();
 					}
 				});
+		//start job from the upload g code controller
+		importGCodePanel.gCodeConsoleView.startJobButton.addActionListener(
+				new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if(CTS){
+					processGCodeFromConsole();
+				}
+				else{
+					importGCodePanel.updateJobStatus("Unable To Start Job. Check Connection Status");
+				}
+			}
+		});
+		//handle pause Job button events from upload g code controller
+		importGCodePanel.gCodeConsoleView.pauseJobButton.addActionListener(
+				new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				//if in PAUSED_STATE, resume processing
+				if(importGCodePanel.getJobState() == UploadGCodeController.PAUSED_STATE){
+					importGCodePanel.resumeJobButtonStates();
+					jobPaused = false;
+					processInstruction(currentInstructionIndex);
+				}
+				//else if in PROCESSING_STATE, pause machine
+				else if(importGCodePanel.getJobState() == UploadGCodeController.PROCESSING_STATE){
+					importGCodePanel.pauseJobButtonStates();
+					jobPaused = true;
+					int nextInstruction = currentInstructionIndex + 1;
+					importGCodePanel.updateJobStatus("Machine Paused. Next Line To Be Executed: " + nextInstruction);
+				}
+				
+			}
+		});
+		//handle terminate job button events from the upload g code controller
+		importGCodePanel.gCodeConsoleView.stopJobButton.addActionListener(
+				new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				importGCodePanel.stopJobButtonStates();
+			}
+		});
+		//handle validate job button so that it traverses g code and checks for errors
+		importGCodePanel.selectInputView.validateGCodeButton.addActionListener(
+				new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				importGCodePanel.validateGCode(connectionSettings.getWidth(), connectionSettings.getDepth(), 
+						connectionSettings.getHeight());
+				
+			}
+		});
 	}
 
 	/**
@@ -290,30 +348,31 @@ public class PNPMainController extends JPanel {
 	 */
 	private boolean connectUSB(){
 		//initializing UsbDevice connects device and opens port at constructor
-		usbDevice = new UsbDevice(connectionSettingsController.portSelectionInput.getSelectedPort(),
+		usbDevice = new UsbDevice(this, connectionSettingsController.portSelectionInput.getSelectedPort(),
 				connectionSettings.getBaudRate());
 		//we test that device is open, and if it is not we attempt to open
 		if(!usbDevice.isOpen()){
 			if(usbDevice.openPort()){
-				System.out.println("PNPMainController:\nconnectUSB(): Port " + 
+				System.out.println("PNPMainController: -> connectUSB(): Port " + 
 						usbDevice.getPortName() + " opened with no error");
 				connectionSettingsController.connectionButtons.connectToDeviceButton.setText("Disconnect");
 				updateConnectionStatusMessage(STATUS_CONNECTED);
+				CTS = true;
 				return true;
 			}
 			else{
-				System.out.println("PNPMainController:\nconnectUSB(): Port " + 
+				System.out.println("PNPMainController: -> connectUSB(): Port " + 
 						usbDevice.getPortName() + " unable to open");
 				updateConnectionStatusMessage(STATUS_CONNECT_ERROR);
 				return true;
 			}
 		}
 		else{
-			System.out.println("PNPMainController:\nconnectUsb(): Usb device connected: " + 
+			System.out.println("PNPMainController: -> connectUsb(): Usb device connected: " + 
 					usbDevice.getPortName());
 			connectionSettingsController.connectionButtons.connectToDeviceButton.setText("Disconnect");
 			updateConnectionStatusMessage(STATUS_CONNECTED);
-
+			CTS = true;
 			return true;
 		}
 	}
@@ -323,25 +382,30 @@ public class PNPMainController extends JPanel {
 	 * @return true if port closes without error
 	 */
 	private boolean disconnectUSB(){
+
+		//TODO send confirmation to PIC to see if connected, then determine course of action based on response
+
 		if(usbDevice.isOpen()){
 			if(usbDevice.close()){
-				System.out.println("PNPMainController:\ndisconnectUSB(): Port " + usbDevice.getPortName() +
+				System.out.println("PNPMainController: -> disconnectUSB(): Port " + usbDevice.getPortName() +
 						" closed without error");
 				connectionSettingsController.connectionButtons.connectToDeviceButton.setText("Connect To Device");
 				updateConnectionStatusMessage(STATUS_DISCONNECTED);
+				CTS = false;
 				return true;
 			}
 			else{
-				System.out.println("PNPMainController:\ndisconnectUSB(): Port " + usbDevice.getPortName() +
+				System.out.println("PNPMainController: -> disconnectUSB(): Port " + usbDevice.getPortName() +
 						" was not able to be closed");
 				updateConnectionStatusMessage(STATUS_DISCONNECT_ERROR);
 				return false;
 			}
 		}
-		System.out.println("PNPMainController:\ndisconnectUSB(): Port " + usbDevice.getPortName() +
+		System.out.println("PNPMainController: -> disconnectUSB(): Port " + usbDevice.getPortName() +
 				" was already closed, no changes made");
 		connectionSettingsController.connectionButtons.connectToDeviceButton.setText("Connect To Device");
 		updateConnectionStatusMessage(STATUS_DISCONNECTED);
+		CTS = false;
 		return false;
 	}
 
@@ -381,35 +445,39 @@ public class PNPMainController extends JPanel {
 	 * @return true if message sent with out error
 	 */
 	private boolean sendMessage(String message){
-		//don't process message if usb device isn't connected
-		if(usbDevice != null){
+		//don't process message if usb device isn't connected or CTS isn't TRUE
+		if(usbDevice != null && CTS){
 			//package command into GCodeCommand object
-			GCodeCommand command = new GCodeCommand(message);
-			//if command is valid and current values update without error
+			GCodeCommand command = new GCodeCommand(message, connectionSettings.getWidth(),
+					connectionSettings.getDepth(), connectionSettings.getHeight());
+			//command is valid, and current values update without error
 			if(command.isValidCommand() && updateValuesFromCommand(command)){
 				//if message sent successful
 				if(usbDevice.writeMessage(message + "\n")){
 					updateManualControllerPositionValues();
-					System.out.println("PNPMainController:\nsendMessage(String message): Message sent with out error " +
+					System.out.println("PNPMainController -> sendMessage(String message): Message sent with out error " +
 							message);
+					CTS = false;
 					return true;
 				}
 				//else return error
 				else{
-					System.out.println("PNPMainController:\nsendMessage(String message): Error Occurred, Message Not Sent");
+					System.out.println("PNPMainController: -> sendMessage(String message): Error Occurred, Message Not Sent");
 					restorePreviousValues();
 					return false;
 				}
 			}
 			//Command was invalid or error was detected when updating current values
-			System.out.println("PNPMainController:\nsendMessage(String message): Invalid Command Found");
+			System.out.println("PNPMainController: -> sendMessage(String message): Invalid Command Found");
 			System.out.println(message);
 			restorePreviousValues();
+			CTS = true;
 			return false;
 		}
 		else{
-			System.out.println("PNPMainController:\nsendMessage(String message): UsbDevice not initialized");
+			System.out.println("PNPMainController: -> sendMessage(String message): UsbDevice not initialized or CTS == FALSE");
 			System.out.println("Message not sent");
+			CTS = false;
 			return false;
 		}	
 	}
@@ -423,7 +491,7 @@ public class PNPMainController extends JPanel {
 		manualController.updateCurrentZValue(currentZ + "");
 		manualController.updateCurrentRValue(currentR + "");
 	}
-	
+
 	/**
 	 * Updates PNP Machine's current values for x, y, z, r, f by parsing argument GCodeCommand
 	 * Values are first stored in back up variables using storeCurrentValues(), enabling us to undo any changes
@@ -432,21 +500,23 @@ public class PNPMainController extends JPanel {
 	 * @return false if command is invalid (ie: out of bounds)
 	 */
 	private boolean updateValuesFromCommand(GCodeCommand command){
-		//
-		//TODO IF WE GET A BAD VALUE, WE NEED TO RESTORE PREVIOUS VALUES!
 		//let's store old values first, then if we need to revert them we can easily
 		storeCurrentValues();
-		
 		//G Move Commmands
 		if(command.isgCommand()){
+			//Home command resets X Y Z to 0
+			if(command.getgValue() == 28){
+				currentX = 0;
+				currentY = 0;
+				currentZ = 0;
+			}
 			//Store X Value
 			if(command.isxMove()){
 				if(command.getxValue() >= 0 && command.getxValue() <= connectionSettings.getWidth()){
 					currentX = command.getxValue();
-					System.out.println("PNPMainController:\nupdateValuesFromCommand(): Updating X Value: " + command.getxValue());
 				}
 				else{
-					System.out.println("PNPMainController:\nupdateValuesFromCommand(): Unable to send" +
+					System.out.println("PNPMainController: -> updateValuesFromCommand(): Unable to send" +
 							"\nVerify X dimension is not out of bounds");
 					return false;
 				}
@@ -455,7 +525,6 @@ public class PNPMainController extends JPanel {
 			if(command.isyMove()){
 				if(command.getyValue() >= 0 && command.getyValue() <= connectionSettings.getDepth()){
 					currentY = command.getyValue();
-					System.out.println("PNPMainController:\nupdateValuesFromCommand(): Updating Y Value: " + command.getyValue());
 				}
 				else{
 					System.out.println("PNPMainController:\nupdateValuesFromCommand(): Unable to send" +
@@ -467,7 +536,6 @@ public class PNPMainController extends JPanel {
 			if(command.iszMove()){
 				if(command.getzValue() >= 0 && command.getzValue() <= connectionSettings.getHeight()){
 					currentZ = command.getzValue();
-					System.out.println("PNPMainController:\nupdateValuesFromCommand(): Updating Z Value: " + command.getzValue());
 				}
 				else{
 					System.out.println("PNPMainController:\nupdateValuesFromCommand(): Unable to send" +
@@ -478,25 +546,23 @@ public class PNPMainController extends JPanel {
 			//Store R Value
 			if(command.isrMove()){
 				currentR = command.getrValue();
-				System.out.println("PNPMainController:\nupdateValuesFromCommand(): Updating R Value: " + command.getrValue());
 			}
 		}
 		//Feed Rate Commands
 		if(command.isfCommand()){
 			currentFeedRate = command.getfValue();
-			System.out.println("PNPMainController:\nupdateValuesFromCommand(): Updating Feed Rate: " + command.getfValue());
 		}
 		//M Vacuum Commands
 		if(command.ismCommand()){
 			if(command.ismCommand()){
 				if(command.getmValue() == 10){
-					System.out.println("PNPMainController:\nupdateValuesFromCommand(): Updating Vacuum State: VACUUM ON");
+					System.out.println("PNPMainController: -> updateValuesFromCommand(): Updating Vacuum State: VACUUM ON");
 				}
 				else if(command.getmValue() == 11){
-					System.out.println("PNPMainController:\nupdateValuesFromCommand(): Updating Vacuum State: VACUUM OFF");
+					System.out.println("PNPMainController: -> updateValuesFromCommand(): Updating Vacuum State: VACUUM OFF");
 				}
 				else{
-					System.out.println("PNPMainController:\nupdateValuesFromCommand(): Invalid Value Detected for 'M'");
+					System.out.println("PNPMainController: -> updateValuesFromCommand(): Invalid Value Detected for 'M'");
 					return false;
 				}
 			}
@@ -509,39 +575,49 @@ public class PNPMainController extends JPanel {
 	 * To be used in case error is detected and values need to be restored
 	 */
 	private void storeCurrentValues(){
-		System.out.println("PNPMainController:\nBacking up current values");
 		previousX = currentX;
 		previousY = currentY;
 		previousZ = currentZ;
 		previousR = currentR;
 		previousFeedRate = currentFeedRate;
 	}
-	
+
 	/**
 	 * Restore values for X, Y, Z, R, and F from previous instruction. 
 	 * To be used after a transmission error that failed.
 	 * Example) currentX = previousX
 	 */
 	private void restorePreviousValues(){
-		System.out.println("PNPMainController:\nrestorePreviousValues(): transmission failed, restoring values");
+		System.out.println("PNPMainController: -> restorePreviousValues(): transmission failed, restoring values");
 		currentX = previousX;
 		currentY = previousY;
 		currentZ = previousZ;
 		currentR = previousR;
 		currentFeedRate = previousFeedRate;
 	}
-	
+
 	/**
 	 * Stops machine's current operation
 	 * @return true if stop procedure was successful
 	 */
 	private boolean emergencyStop(){
 		//TODO define emergency stop
-		//stop machine and store current location and operation?
-		//stop machine after current operation is complete?
-		return true;
+		if(CTS && sendMessage(EMERGENCY_STOP)){
+			System.out.println("PNPMainController: -> emergencyStop(): PNP Machine Stopped");
+			CTS = true;
+			return true;
+		}
+		else{
+			System.out.println("PNPMainController: -> emergencyStop(): unable to send emergency stop command");
+			CTS = true;
+			return false;
+		}
 	}
 
+	/**
+	 * Restore default values found on Connection Settings View
+	 * Default values are defined in the ConnectionSettingsModel class
+	 */
 	private void restoreDefaults(){
 		//update our settings data model with defaults
 		connectionSettings.restoreDefaultValues();
@@ -569,7 +645,6 @@ public class PNPMainController extends JPanel {
 		double jogYPosition = currentY - manualController.getStepSize();
 		sendMessage("G1 Y" + jogYPosition);
 	}
-	
 
 	/**
 	 * Jog machine in positive X direction
@@ -603,14 +678,107 @@ public class PNPMainController extends JPanel {
 		sendMessage("G1 Z" + jogZPosition);
 	}
 
+	/**
+	 * Handle read events from UsbDevice
+	 * Verify if PIC return value matches Applications current values for X Y Z
+	 */
+	@Override
+	public void UsbReadEvent(String message) {
+		System.out.println("PNPMainController: PIC Return Value: " + message.replace("\n", ""));
+		//invalid command = INVALID COMMAND
+		//invalid argument = INVALID ARGUMENT
+		//out of bounds = OUT OF BOUNDS
+		//unknown error = UNKNOWN
+		GCodeCommand picReturnCommand = new GCodeCommand(message, connectionSettings.getWidth(), 
+				connectionSettings.getDepth(), connectionSettings.getHeight());
+		if(picReturnCommand.isPicReturnValue()){
+			if(verifyPositionAgainstPic(picReturnCommand)){
+				System.out.println("PNPMainController: PNP App & PIC Coordinates Match\n\n");
+				
+				//if we are processing a PNP File, send the next instruction
+				if(processingJob){
+					CTS = true;
+					importGCodePanel.gCodeConsoleView.removeHighlightLine(currentInstructionIndex);
+					currentInstructionIndex++;
+					
+					if(currentInstructionIndex < gCodeInstructions.size() && !jobPaused){
+						processInstruction(currentInstructionIndex);
+						importGCodePanel.gCodeConsoleView.highlightLine(currentInstructionIndex);
+					}
+					else if(jobPaused){
+						System.out.println("\nPNPMainController: JOB PAUSED");
+					}
+					else{
+						System.out.println("\nPNPMainController: JOB COMPLETED WITHOUT ERROR");
+						processingJob = false;
+						importGCodePanel.stopJobButtonStates();
+					}
+				}
+			}
+			else{
+				System.out.println("PNPMainController: PNP App & PIC Coordinates Do Not Match!");
+				System.out.println("PIC Returned: " + message);
+			}
+		}
+		//we have received return value from PIC, return CTS to true, allowing PNP Application
+		//to continue sending commands to PIC
+		CTS = true;
+	}
 
+	/**
+	 * Check value of PIC return command against PNP Application's current values for X Y Z
+	 * @param picReturnCommand GCodeCommand received from PIC as return value
+	 * @return true of PIC return value matches PNP Applications current values for X Y Z
+	 */
+	private boolean verifyPositionAgainstPic(GCodeCommand picReturnCommand){
+		if(picReturnCommand.getxValue() == currentX &&
+				picReturnCommand.getyValue() == currentY &&
+				picReturnCommand.getzValue() == currentZ){
+			return true;
+		}
+		else{
+			return false;
+		}
+	}
+
+	/**
+	 * Process the G Code instructions found in Import G Code View line by line until complete
+	 * @return
+	 */
+	private void processGCodeFromConsole(){
+		importGCodePanel.startJobButtonStates();
+		gCodeInstructions = importGCodePanel.getConsoleContentArray();
+		currentInstructionIndex = 0;
+		processingJob = true;
+		importGCodePanel.updateJobStatus("Transmitting G Code at Line: " + currentInstructionIndex);
+		processInstruction(currentInstructionIndex);
+	}
+	
+	private void processInstruction(int currentInstructionIndex){
+		//skip over blank lines and comments
+		while(gCodeInstructions.get(currentInstructionIndex).matches("\\s*") || 
+				gCodeInstructions.get(currentInstructionIndex).trim().charAt(0) == ';'){
+					currentInstructionIndex++;
+				}
+		importGCodePanel.updateJobStatus("Transmitting G Code at Line: " + currentInstructionIndex);
+		if(sendMessage(gCodeInstructions.get(currentInstructionIndex))){
+			System.out.println("\nPNPMainController -> processInstruction: Instruction at line " + 
+					currentInstructionIndex + " was processed without error");
+			
+		}
+		else{
+			System.out.println("\nPNPMainController -> processInstruction: Instruction at line " + 
+					currentInstructionIndex + " received error message during transmission");
+			importGCodePanel.updateJobStatus("Error Transmitting G Code at Line: " + currentInstructionIndex);
+		}
+	}
 	
 	/**
 	 * Default Serial Version UID
 	 */
 	private static final long serialVersionUID = 1L;
 	//different views for user interface
-	private ConnectionSettingsController connectionSettingsController;
+	public ConnectionSettingsController connectionSettingsController;
 	private GCodeGeneratorController gCodeGeneratorPanel;
 	private UploadGCodeController importGCodePanel;
 	private ManualController manualController;
@@ -618,13 +786,15 @@ public class PNPMainController extends JPanel {
 	private UsbDevice usbDevice;
 	//Object for storing/manipulating connection settings
 	private ConnectionSettingsModel connectionSettings;
+	//clear to send flag used to prevent multiple instructions from sending
+	private boolean CTS;
 	//current coordinate positions
 	private double currentX;
 	private double currentY;
 	private double currentZ;
 	private double currentR;
 	private int currentFeedRate;
-	private boolean vacuumOn;
+	//private boolean vacuumOn;
 	//previous coordinate positions for restoring after a failure
 	private double previousX;
 	private double previousY;
@@ -637,10 +807,17 @@ public class PNPMainController extends JPanel {
 	private final int STATUS_CONNECT_ERROR = 3;
 	private final int STATUS_DISCONNECT_ERROR = 4;
 	private final int STATUS_SEND_ERROR = 5;
+	//processing G Code jobs
+	private boolean processingJob;
+	List<String> gCodeInstructions;
+	private int currentInstructionIndex;
+	private boolean jobPaused;
+	
 	//home commands
 	private final String HOME_X = "G1 X0";
 	private final String HOME_Y = "G1 Y0";
 	private final String HOME_Z = "G1 Z0";
-	private final String HOME_R = "G1 R0";
-	private final String HOME_ALL = "G28";
+	//private final String HOME_R = "G1 R0";
+	//private final String HOME_ALL = "G28";
+	private final String EMERGENCY_STOP = "!!!";
 }
