@@ -1,5 +1,6 @@
 package import_g_code_ui.controller;
 
+import g_code_generator_ui.controller.GCodeCommand;
 import import_g_code_ui.view.CommandConsoleView;
 import import_g_code_ui.view.ProcessJobButtonView;
 import import_g_code_ui.view.SelectGCodeInputView;
@@ -12,7 +13,6 @@ import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JFileChooser;
 import javax.swing.JPanel;
-
 import connection_settings_ui.view.SettingsTitleView;
 
 /**
@@ -47,7 +47,7 @@ public class UploadGCodeController extends JPanel{
 		gCodeConsoleView = new CommandConsoleView();
 		gCodeConsoleView.setAlignmentX(JPanel.LEFT_ALIGNMENT);
 		//Job Processing Buttons
-		processJobButtonsView = new ProcessJobButtonView(DISCONNECTED);
+		processJobButtonsView = new ProcessJobButtonView(SELECT_INPUT);
 		processJobButtonsView.setAlignmentX(JPanel.LEFT_ALIGNMENT);
 		//Add individual components to this.JPanel for final display, laid on vertically along y Axis
 		this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
@@ -78,35 +78,13 @@ public class UploadGCodeController extends JPanel{
 				if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
 					selectInputView.updateInputPath(chooser.getSelectedFile().toString());
 					setConsoleContent(selectInputView.getFileContent());
-					//highlight first line to be processed
-					gCodeConsoleView.highlightLine(0);
+					selectInputView.validateGCodeButton.setEnabled(true);
+					gCodeConsoleView.startJobButton.setEnabled(false);
+					gCodeConsoleView.pauseJobButton.setEnabled(false);
+					gCodeConsoleView.pauseJobButton.setText("Pause");
+					gCodeConsoleView.stopJobButton.setEnabled(false);
+					processJobButtonsView.updateJobStatus("File Found. Please Validate G Code");
 				} 
-			}
-		});
-		//Start Job Button
-		gCodeConsoleView.startJobButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				startJob();
-			}
-		});
-		//Stop Job Button
-		gCodeConsoleView.stopJobButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				stopJob();
-			}
-		});
-		//Pause/Resume Job Button
-		gCodeConsoleView.pauseJobButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				if(jobState == PROCESSING_STATE){
-					nextInstruction = pauseJob();
-				}
-				else{
-					resumeJob(nextInstruction);
-				}
 			}
 		});
 	}
@@ -132,65 +110,93 @@ public class UploadGCodeController extends JPanel{
 	}
 
 	/**
-	 * Initiate PNP Job
+	 * Traverse array of G Code Instructions found in Console View and validate that no errors exist
+	 * @return true if no G Code errors are found
 	 */
-	private void startJob(){
-		//TODO check if valid g code is present in console 1st
-		//validateGCode();
-
-		//TODO MUST BE THREAD SAFE TO ALLOW ACCESS TO UI
-		//new thread
-		//change state to processing
-		jobState = PROCESSING_STATE;
-
-		//update button displays
+	public boolean validateGCode(double xMax, double yMax, double zMax){
+		List<String> gCodeList = getConsoleContentArray();
+		int lineNumber = 1;
+		clearHighlights();
+		for(String gCodeLine : gCodeList){
+			//if not a blank line or comment -> process line
+			if(!(gCodeLine.matches("\\s*") || gCodeLine.trim().charAt(0) == ';')){
+				GCodeCommand command = new GCodeCommand(gCodeLine, xMax, yMax, zMax);
+				//if bad command found, return false and highlight line number
+				if(command.isBadCommand()){
+					gCodeConsoleView.highlightLine(lineNumber-1);
+					processJobButtonsView.updateJobStatus("Invalid G Code Command Found On Line: " + lineNumber);
+					return false;
+				}
+			}
+			lineNumber++;
+		}
+		processJobButtonsView.updateJobStatus("Validation Completed Without Errors. Press 'Start' To Begin Job");
+		System.out.println("\nUploadGCodeController -> No G Code Errors Found\n");
+		gCodeConsoleView.startJobButton.setEnabled(true);
+		selectInputView.validateGCodeButton.setEnabled(false);
+		return true;
+	}
+	
+	/**
+	 * Remove all highlights from console view
+	 */
+	private void clearHighlights(){
+		List<String> gCodeList = getConsoleContentArray();
+		for(int i = 0; i < gCodeList.size(); i++){
+			gCodeConsoleView.removeHighlightLine(i);
+		}
+	}
+	
+	/**
+	 * Update view's button states after start job button has been pressed
+	 */
+	public void startJobButtonStates(){
 		gCodeConsoleView.startJobButton.setEnabled(false);
 		gCodeConsoleView.pauseJobButton.setEnabled(true);
 		gCodeConsoleView.stopJobButton.setEnabled(true);
-	}
-
-	/**
-	 * Pause PNP Job
-	 * @return nextInstruction integer value that points to the next line of G Code to be executed
-	 */
-	private int pauseJob(){
-		//TODO complete current instruction, store pointer so we know where to resume, pause transmission
-		int nextInstruction = 0;
-		
-		//change state to paused
-		jobState = PAUSED_STATE;
-		//update button displays
-		gCodeConsoleView.pauseJobButton.setText("Resume");
-
-		return nextInstruction;
-	}
-
-	/**
-	 * Resume PNP Job
-	 * @param nextInstruction integer value that points to the next line of G Code to be executed
-	 */
-	private void resumeJob(int nextInstruction){
-		//TODO get nextInstruction from console and resume processing
-		//change state to processing
+		selectInputView.getFileButton.setEnabled(false);
 		jobState = PROCESSING_STATE;
-		//adjust button display settings
-		gCodeConsoleView.pauseJobButton.setText("Pause");
+	}
+	
+	/**
+	 * Upate view's button states after pause job button has been pressed
+	 */
+	public void pauseJobButtonStates(){
+		gCodeConsoleView.pauseJobButton.setText("Resume");
+		selectInputView.getFileButton.setEnabled(true);
+		jobState = PAUSED_STATE;
 	}
 
 	/**
-	 * WARNING: Entirely terminates PNP Job being processed
-	 * 
+	 * Update view's button states after resume job button has been pressed
 	 */
-	private void stopJob(){
-		//TODO store 
-		jobState = STOPPED_STATE;
+	public void resumeJobButtonStates(){
+		gCodeConsoleView.pauseJobButton.setText("Pause");
+		selectInputView.getFileButton.setEnabled(false);
+		jobState = PROCESSING_STATE;
+	}
+
+	/**
+	 * Update view's button states after stop job button has been pressed
+	 */
+	public void stopJobButtonStates(){
 		//adjust button display settings
 		gCodeConsoleView.startJobButton.setEnabled(true);
 		gCodeConsoleView.pauseJobButton.setText("Pause");
 		gCodeConsoleView.pauseJobButton.setEnabled(false);
 		gCodeConsoleView.stopJobButton.setEnabled(false);
+		selectInputView.getFileButton.setEnabled(true);
+		jobState = STOPPED_STATE;
 	}
 
+	/**
+	 * Update PNP Machine's current job status
+	 * @param String status to be applied to UI
+	 */
+	public void updateJobStatus(String status){
+		processJobButtonsView.updateJobStatus(status);
+	}
+	
 	/**
 	 * Get current state of job
 	 * @return jobState
@@ -207,21 +213,22 @@ public class UploadGCodeController extends JPanel{
 	/**
 	 * Class Constants
 	 */
-	private static final String DISCONNECTED = "Device Disconnected. Visit Settings Page to connect to a device.";
+	//private static final String DISCONNECTED = "Device Disconnected. Visit Settings Page to connect to a device";
+	private static final String SELECT_INPUT = "Please select an input file to begin working";
 	//private static final String CONNECTED = "Device Connected. Click 'Start Job' to begin processing G Code.";
-	private static final int STOPPED_STATE = 0;
-	private static final int PROCESSING_STATE = 1;
-	private static final int PAUSED_STATE = 2;
+	public static final int STOPPED_STATE = 0;
+	public static final int PROCESSING_STATE = 1;
+	public static final int PAUSED_STATE = 2;
 
 	/**
 	 * Class variables
 	 */
 	private SettingsTitleView uploadGCodeTitle;
-	private SelectGCodeInputView selectInputView;
-	private CommandConsoleView gCodeConsoleView;
-	private ProcessJobButtonView processJobButtonsView;
+	public SelectGCodeInputView selectInputView;
+	public CommandConsoleView gCodeConsoleView;
+	public ProcessJobButtonView processJobButtonsView;
 	private int jobState;
-	private int nextInstruction;
-
+	//private int nextInstruction;
+	
 
 }
