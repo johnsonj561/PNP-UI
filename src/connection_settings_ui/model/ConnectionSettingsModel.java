@@ -168,9 +168,7 @@ public class ConnectionSettingsModel {
 		return DEF_HEIGHT;
 	}
 
-
 	
-
 	private int baudRate;
 	private int feedRate;
 	private int width;
@@ -180,8 +178,8 @@ public class ConnectionSettingsModel {
 	private boolean connected;
 	public static final int DEF_BAUD = 9600;
 	public static final int DEF_FEED_RATE = 1000;
-	public static final int DEF_WIDTH = 450;
-	public static final int DEF_DEPTH = 450;
+	public static final int DEF_WIDTH = 550;
+	public static final int DEF_DEPTH = 550;
 	public static final int DEF_HEIGHT = 100;
 	public static final int DEF_STEP_SIZE = 10;
 	
