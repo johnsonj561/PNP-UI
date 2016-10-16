@@ -49,6 +49,7 @@ public class CommandConsoleView extends JPanel{
 		buttonsPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));
 		//save button functionality
 		startJobButton = new JButton("Start Job");
+		startJobButton.setEnabled(false);
 		//pause current job
 		pauseJobButton = new JButton("Pause");
 		pauseJobButton.setEnabled(false);
@@ -107,7 +108,18 @@ public class CommandConsoleView extends JPanel{
 			}
 		}
 	}
-
+	
+	/**
+	 * Removes highlight from a given line
+	 * @param int lineNumber the line to be un-highlighted
+	 */
+	public void removeHighlightLine(int lineNumber){
+		if(lineNumber >= 0 && lineNumber <= gCodeTextArea.getLineCount()){
+			DefaultHighlighter highlighter =  (DefaultHighlighter)gCodeTextArea.getHighlighter();
+			highlighter.removeAllHighlights();
+		}
+	}
+	
 	/**
 	 * Removes the first line of text from the console
 	 */
