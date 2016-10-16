@@ -1,0 +1,4 @@
+G1 X5 Y5 ; this is first line
+G1 X20; let's see
+G1 Y100; just how well this thing works
+G28	;sending it home :)

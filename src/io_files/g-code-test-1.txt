@@ -1,0 +1,53 @@
+G1 X5 Y5 ; this is first line
+G1 X20; let's see
+G1 Y100; just how well this thing works
+G28; sending it home :)
+G1 X5 Y5 ; this is first line
+G1 X20; let's see
+G1 Y100; just how well this thing works
+G28; sending it home :)
+G1 X75 F4000; let's increase the speed
+G1 X0 Y100
+G1 F5000; now let's speed it up
+G1 X10
+G1 X100 Y10 F2000
+G1 F2000 ; moving it back to normal speed
+G28
+G4 P200
+G4 P200
+G4 P200
+G4 P200
+G4 P200
+G4 P200
+
+G4 P200
+G4 P200
+G4 P200
+G4 P200
+G4 P200
+G4 P200
+G4 P200
+G4 P200
+G4 P200
+G4 P200
+G4 P200
+G4 P200
+G1 X60 Y60
+G1 X80 F2000
+G1 X60 F2245
+G1 X80 F2520
+G1 X60 F2670
+G1 X80 F2997
+G1 X60 F2670
+G1 X80 F2520
+G1 X60 F2245
+G1 X80 F2000
+
+
+G1 X100 Y50 F3000
+G4 P100
+G4 P100
+G4 P100
+G4 P100
+G4 P100
+G28
