@@ -1,5 +1,6 @@
 package pnp_main_controller;
-import g_code_generator_ui.controller.GCodeCommand;
+import g_code_generator_ui.model.GCodeCommand;
+import g_code_generator_ui.model.PICReturnValue;
 import g_code_generator_ui.controller.GCodeGeneratorController;
 import import_g_code_ui.controller.UploadGCodeController;
 
@@ -12,6 +13,8 @@ import javax.swing.SwingUtilities;
 import manual_control_ui.controller.ManualController;
 import connection_settings_ui.controller.ConnectionSettingsController;
 import connection_settings_ui.model.ConnectionSettingsModel;
+import define_parts_ui.controller.DefinePartsController;
+
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.GridLayout;
@@ -67,7 +70,7 @@ public class PNPMainController extends JPanel implements UsbEvent {
 		try {
 			connectionSettingsController = new ConnectionSettingsController();
 		} catch (SerialPortException e) {
-			// TODO Auto-generated catch block
+			System.out.println("PNPMainController: Error creating tabbed interface");
 			e.printStackTrace();
 		}
 		tabbedPane.addTab("Connect Settings", null, connectionSettingsController, 
@@ -84,8 +87,8 @@ public class PNPMainController extends JPanel implements UsbEvent {
 		manualController = new ManualController();
 		tabbedPane.addTab("Manual PNP Control", null, manualController, "Manual PNP Control");
 		//Create Parts Specifications
-		JComponent panel4 = makeTextPanel("Coming Soon:\nCreate A Parts File");
-		tabbedPane.addTab("Define Parts", null, panel4, "Define Parts");
+		definePartsController = new DefinePartsController();
+		tabbedPane.addTab("Define Proejct Parts", null, definePartsController, "Define Footprints, Values, and Positioning");
 		//add tabs to JPanel
 		add(tabbedPane);
 	}
@@ -315,7 +318,7 @@ public class PNPMainController extends JPanel implements UsbEvent {
 	private static void createAndShowGUI() {
 		//Create and set up the window.
 		JFrame.setDefaultLookAndFeelDecorated(true);
-		JFrame frame = new JFrame("Pic N Place");
+		JFrame frame = new JFrame("PIC N Place");
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		//set preferred size, min size, and window start up position
 		frame.setPreferredSize(new Dimension(700, 700));
@@ -382,9 +385,6 @@ public class PNPMainController extends JPanel implements UsbEvent {
 	 * @return true if port closes without error
 	 */
 	private boolean disconnectUSB(){
-
-		//TODO send confirmation to PIC to see if connected, then determine course of action based on response
-
 		if(usbDevice.isOpen()){
 			if(usbDevice.close()){
 				System.out.println("PNPMainController: -> disconnectUSB(): Port " + usbDevice.getPortName() +
@@ -457,6 +457,7 @@ public class PNPMainController extends JPanel implements UsbEvent {
 					updateManualControllerPositionValues();
 					System.out.println("PNPMainController -> sendMessage(String message): Message sent with out error " +
 							message);
+					//CTS set to false, disabling UI from sending another command until a response is received
 					CTS = false;
 					return true;
 				}
@@ -475,8 +476,8 @@ public class PNPMainController extends JPanel implements UsbEvent {
 			return false;
 		}
 		else{
-			System.out.println("PNPMainController: -> sendMessage(String message): UsbDevice not initialized or CTS == FALSE");
-			System.out.println("Message not sent");
+			System.out.println("PNPMainController: -> sendMessage(String message): Message not sent. " + 
+					"UsbDevice not initialized or CTS == FALSE");
 			CTS = false;
 			return false;
 		}	
@@ -557,9 +558,11 @@ public class PNPMainController extends JPanel implements UsbEvent {
 			if(command.ismCommand()){
 				if(command.getmValue() == 10){
 					System.out.println("PNPMainController: -> updateValuesFromCommand(): Updating Vacuum State: VACUUM ON");
+					//vacuumOn = true;
 				}
 				else if(command.getmValue() == 11){
 					System.out.println("PNPMainController: -> updateValuesFromCommand(): Updating Vacuum State: VACUUM OFF");
+					//vacuumOn = false;
 				}
 				else{
 					System.out.println("PNPMainController: -> updateValuesFromCommand(): Invalid Value Detected for 'M'");
@@ -601,7 +604,6 @@ public class PNPMainController extends JPanel implements UsbEvent {
 	 * @return true if stop procedure was successful
 	 */
 	private boolean emergencyStop(){
-		//TODO define emergency stop
 		if(CTS && sendMessage(EMERGENCY_STOP)){
 			System.out.println("PNPMainController: -> emergencyStop(): PNP Machine Stopped");
 			CTS = true;
@@ -685,40 +687,44 @@ public class PNPMainController extends JPanel implements UsbEvent {
 	@Override
 	public void UsbReadEvent(String message) {
 		System.out.println("PNPMainController: PIC Return Value: " + message.replace("\n", ""));
-		//invalid command = INVALID COMMAND
-		//invalid argument = INVALID ARGUMENT
-		//out of bounds = OUT OF BOUNDS
-		//unknown error = UNKNOWN
-		GCodeCommand picReturnCommand = new GCodeCommand(message, connectionSettings.getWidth(), 
-				connectionSettings.getDepth(), connectionSettings.getHeight());
-		if(picReturnCommand.isPicReturnValue()){
-			if(verifyPositionAgainstPic(picReturnCommand)){
-				System.out.println("PNPMainController: PNP App & PIC Coordinates Match\n\n");
-				
-				//if we are processing a PNP File, send the next instruction
-				if(processingJob){
-					CTS = true;
-					importGCodePanel.gCodeConsoleView.removeHighlightLine(currentInstructionIndex);
-					currentInstructionIndex++;
-					
-					if(currentInstructionIndex < gCodeInstructions.size() && !jobPaused){
-						processInstruction(currentInstructionIndex);
-						importGCodePanel.gCodeConsoleView.highlightLine(currentInstructionIndex);
-					}
-					else if(jobPaused){
-						System.out.println("\nPNPMainController: JOB PAUSED");
-					}
-					else{
-						System.out.println("\nPNPMainController: JOB COMPLETED WITHOUT ERROR");
-						processingJob = false;
-						importGCodePanel.stopJobButtonStates();
+		PICReturnValue picReturnCommand = new PICReturnValue(message);
+		if(picReturnCommand.isValidPicReturn()){
+			if(!picReturnCommand.isErrorMessage()){
+				//if message is valid PIC return and is not an error message
+				//verify that new coordinates match UI's expected coordinates
+				if(verifyPositionAgainstPic(picReturnCommand)){
+					System.out.println("PNPMainController: PNP App & PIC Coordinates Match\n\n");
+					//if we are processing a PNP File, send the next instruction
+					if(processingJob){
+						CTS = true;
+						importGCodePanel.gCodeConsoleView.removeHighlightLine(currentInstructionIndex);
+						currentInstructionIndex++;
+						if(currentInstructionIndex < gCodeInstructions.size() && !jobPaused){
+							processInstruction(currentInstructionIndex);
+							importGCodePanel.gCodeConsoleView.highlightLine(currentInstructionIndex);
+						}
+						else if(jobPaused){
+							System.out.println("\nPNPMainController: JOB PAUSED");
+						}
+						else{
+							System.out.println("\nPNPMainController: JOB COMPLETED WITHOUT ERROR");
+							processingJob = false;
+							importGCodePanel.stopJobButtonStates();
+						}
 					}
 				}
+				//else PIC return value does not match UI's expected return value, display PIC coordinates to user
+				else{
+					System.out.println("PNPMainController: UsbReadEvent -> PNP App & PIC Coordinates Do Not Match!");
+					System.out.println("PIC Returned: " + message);
+					//TODO HOW TO HANDLE PIC RETURN VALUE THAT DOES NOT MATCH UI'S EXPECTED RETURN VALUE
+				}
 			}
+			//else PIC return value is an error message, display error message to user
 			else{
-				System.out.println("PNPMainController: PNP App & PIC Coordinates Do Not Match!");
-				System.out.println("PIC Returned: " + message);
+				System.out.println("PNPMainController: UsbReadEvent -> PIC Returned Error: " + picReturnCommand.getErrorType());
 			}
+			
 		}
 		//we have received return value from PIC, return CTS to true, allowing PNP Application
 		//to continue sending commands to PIC
@@ -730,7 +736,7 @@ public class PNPMainController extends JPanel implements UsbEvent {
 	 * @param picReturnCommand GCodeCommand received from PIC as return value
 	 * @return true of PIC return value matches PNP Applications current values for X Y Z
 	 */
-	private boolean verifyPositionAgainstPic(GCodeCommand picReturnCommand){
+	private boolean verifyPositionAgainstPic(PICReturnValue picReturnCommand){
 		if(picReturnCommand.getxValue() == currentX &&
 				picReturnCommand.getyValue() == currentY &&
 				picReturnCommand.getzValue() == currentZ){
@@ -782,6 +788,7 @@ public class PNPMainController extends JPanel implements UsbEvent {
 	private GCodeGeneratorController gCodeGeneratorPanel;
 	private UploadGCodeController importGCodePanel;
 	private ManualController manualController;
+	private DefinePartsController definePartsController;
 	//UsbDevice for communicating to PIC
 	private UsbDevice usbDevice;
 	//Object for storing/manipulating connection settings
