@@ -1,6 +1,6 @@
 package import_g_code_ui.controller;
 
-import g_code_generator_ui.controller.GCodeCommand;
+import g_code_generator_ui.model.GCodeCommand;
 import import_g_code_ui.view.CommandConsoleView;
 import import_g_code_ui.view.ProcessJobButtonView;
 import import_g_code_ui.view.SelectGCodeInputView;
