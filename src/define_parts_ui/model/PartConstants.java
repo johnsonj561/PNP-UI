@@ -31,8 +31,8 @@ public class PartConstants {
 	 */
 	public static String[] getPartsCounter(int max){
 		String[] counter = new String[max];
-		for(int i = 1; i < max; i++){
-			counter[i] = i + "";
+		for(int i = 0; i < max; i++){
+			counter[i] = (i+1) + "";
 		}
 		return counter;
 	}
