@@ -1,7 +1,6 @@
 package define_parts_ui.view;
 
 import define_parts_ui.model.PartConstants;
-
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -31,6 +30,12 @@ public class AddNewPartView extends JPanel{
 	 */
 	public AddNewPartView() {
 		initUI();
+		//initialize (x,y) coordinates to -1, validation will confirm that values have been properly defined
+		//before adding part to part list
+		xInitial = -1;
+		yInitial = -1;
+		xFinal = -1;
+		yFinal = -1;
 	}
 
 	/**
@@ -177,9 +182,17 @@ public class AddNewPartView extends JPanel{
 		savePartPanel.setLayout(new BoxLayout(savePartPanel, BoxLayout.X_AXIS));
 		savePartPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		savePartPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-		savePartButton = new JButton("Add Part");
+		addPartButton = new JButton("Add Part");
+		savePartButton = new JButton("Save Changes");
 		savePartButton.setEnabled(false);
+		savePartErrorLabel = new JLabel("");
+		savePartErrorLabel.setFont(new Font("Verdana", Font.ITALIC, 12));
+		//savePartButton.setEnabled(false);
+		savePartPanel.add(addPartButton);
+		savePartPanel.add(Box.createRigidArea(new Dimension(10, 0)));
 		savePartPanel.add(savePartButton);
+		savePartPanel.add(Box.createRigidArea(new Dimension(5,0)));
+		savePartPanel.add(savePartErrorLabel);
 		//add all views to this JPanel
 		this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		this.add(footprintSelectionPanel);
@@ -191,6 +204,14 @@ public class AddNewPartView extends JPanel{
 		this.add(savePartPanel);
 	}
 
+	/**
+	 * Update error message feedback with new error
+	 * @param String error
+	 */
+	public void setNewPartErrorMessage(String error){
+		savePartErrorLabel.setText(error);
+	}
+	
 	/**
 	 * Set first part button definition status to positive, display green check mark
 	 */
@@ -231,11 +252,125 @@ public class AddNewPartView extends JPanel{
 	 */
 	public void setLastPartDefinitionStatusNegative(){
 		try {
-			lastPartStatusImage = ImageIO.read(getClass().getResource("/images/green-circle-20x20.png"));
+			lastPartStatusImage = ImageIO.read(getClass().getResource("/images/red-circle-20x20.png"));
 			lastPartStatusLabel.setIcon(new ImageIcon(lastPartStatusImage));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	/**
+	 * Return current selected footprint from JComboBox
+	 * @return String selected footprint
+	 */
+	public String getFootprint(){
+		return (String) footprintSelectionComboBox.getSelectedItem();
+	}
+	
+	/**
+	 * Set selected footprint value
+	 * If value is not an option, no changes will be made
+	 * @param String footprint value being set
+	 */
+	public void setFootprint(String footprint){
+		footprintSelectionComboBox.setSelectedItem(footprint);
+	}
+
+	/**
+	 * Return value displayed in componentValue text input field
+	 * @return String componentValue
+	 */
+	public String getComponentValue(){
+		return componentValueTextField.getText();
+	}
+	
+	/**
+	 * Set text field for component value to assigned value
+	 * @param String value
+	 */
+	public void setComponentValue(String value){
+		componentValueTextField.setText(value);
+	}
+	
+	/**
+	 * Return value of x initial, the x coordinate of 1st part in row
+	 * @return double xInitial
+	 */
+	public double getXinitial(){
+		return xInitial;
+	}
+	
+	/**
+	 * Set value of x initial, the x coordinate of 1st part in row
+	 * @param double x
+	 */
+	public void setXinitial(double x){
+		xInitial = x;
+	}
+	
+	/**
+	 * Return value of y initial, the y coordinate of 1st part in row
+	 * @return double yInitial
+	 */
+	public double getYinitial(){
+		return yInitial;
+	}
+	
+	/**
+	 * Set value of y initial, the y coordinate of 1st part in row
+	 * @param double y
+	 */
+	public void setYinitial(double y){
+		yInitial = y;
+	}
+	
+	/**
+	 * Return value of x final, the x coordinate of last part in row
+	 * @return double Xfinal
+	 */
+	public double getXfinal(){
+		return xFinal;
+	}
+	
+	/**
+	 * Set value of x final, the x coordinate of last part in row
+	 * @param double x
+	 */
+	public void setXfinal(double x){
+		xFinal = x;
+	}
+	
+	/**
+	 * Return value of y final, the y coordinate of last part in row
+	 * @return double yfinal
+	 */
+	public double getYfinal(){
+		return yFinal;
+	}
+	
+	/**
+	 * Set value of y final, the y coordinate of last part in row
+	 * @param double y
+	 */
+	public void setYfinal(double y){
+		yFinal = y;
+	}
+	
+	/**
+	 * Returns total number of parts in this row of parts
+	 * @return int partCount = total number of parts in row
+	 */
+	public String getPartCount(){
+		return (String) partCountComboBox.getSelectedItem();
+	}
+	
+	/**
+	 * Set the total number of parts
+	 * If number provided is not an option, no changes are made
+	 * @param String count = total number of parts in current row
+	 */
+	public void setPartCount(String count){
+		partCountComboBox.setSelectedItem(count);
 	}
 	
 	/**
@@ -286,10 +421,17 @@ public class AddNewPartView extends JPanel{
 	private String PART_COUNT_DESCRIPTION = "Number or components on tape between first and last part";
 	//save/import/export buttons
 	private JPanel savePartPanel;
+	public JButton addPartButton;
 	public JButton savePartButton;
+	private JLabel savePartErrorLabel;
 	//label width defined to maintain alignment
 	private final int LABEL_WIDTH = 100;
 	private final int TEXT_FIELD_WIDTH = 130;
 	private final int COMBO_BOX_WIDTH = 130;
 	private final int BUTTON_WIDTH = 130;
+	//variables to store coordinates of first and last parts
+	private double xInitial;
+	private double yInitial;
+	private double xFinal;
+	private double yFinal;
 }
