@@ -180,7 +180,7 @@ public class ConnectionSettingsModel {
 	public static final int DEF_FEED_RATE = 1000;
 	public static final int DEF_WIDTH = 550;
 	public static final int DEF_DEPTH = 550;
-	public static final int DEF_HEIGHT = 100;
+	public static final int DEF_HEIGHT = 6;
 	public static final int DEF_STEP_SIZE = 10;
 	
 	
