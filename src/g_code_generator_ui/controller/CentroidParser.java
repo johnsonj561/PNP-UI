@@ -16,7 +16,6 @@ public class CentroidParser {
 		System.out.println("CentroidParser init()");
 		System.out.println(centroidInput);
 		inputFile = centroidInput;
-		//TODO check for bad input files
 	}
 
 	/**
