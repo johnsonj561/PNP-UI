@@ -246,55 +246,75 @@ public class PNPMainController extends JPanel implements UsbEvent {
 		//start job from the upload g code controller
 		importGCodePanel.gCodeConsoleView.startJobButton.addActionListener(
 				new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				if(CTS){
-					processGCodeFromConsole();
-				}
-				else{
-					importGCodePanel.updateJobStatus("Unable To Start Job. Check Connection Status");
-				}
-			}
-		});
+					@Override
+					public void actionPerformed(ActionEvent e) {
+						if(CTS){
+							processGCodeFromConsole();
+						}
+						else{
+							importGCodePanel.updateJobStatus("Unable To Start Job. Check Connection Status");
+						}
+					}
+				});
 		//handle pause Job button events from upload g code controller
 		importGCodePanel.gCodeConsoleView.pauseJobButton.addActionListener(
 				new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				//if in PAUSED_STATE, resume processing
-				if(importGCodePanel.getJobState() == UploadGCodeController.PAUSED_STATE){
-					importGCodePanel.resumeJobButtonStates();
-					jobPaused = false;
-					processInstruction(currentInstructionIndex);
-				}
-				//else if in PROCESSING_STATE, pause machine
-				else if(importGCodePanel.getJobState() == UploadGCodeController.PROCESSING_STATE){
-					importGCodePanel.pauseJobButtonStates();
-					jobPaused = true;
-					int nextInstruction = currentInstructionIndex + 1;
-					importGCodePanel.updateJobStatus("Machine Paused. Next Line To Be Executed: " + nextInstruction);
-				}
-				
-			}
-		});
+					@Override
+					public void actionPerformed(ActionEvent e) {
+						//if in PAUSED_STATE, resume processing
+						if(importGCodePanel.getJobState() == UploadGCodeController.PAUSED_STATE){
+							importGCodePanel.resumeJobButtonStates();
+							jobPaused = false;
+							processInstruction(currentInstructionIndex);
+						}
+						//else if in PROCESSING_STATE, pause machine
+						else if(importGCodePanel.getJobState() == UploadGCodeController.PROCESSING_STATE){
+							importGCodePanel.pauseJobButtonStates();
+							jobPaused = true;
+							int nextInstruction = currentInstructionIndex + 1;
+							importGCodePanel.updateJobStatus("Machine Paused. Next Line To Be Executed: " + nextInstruction);
+						}
+
+					}
+				});
 		//handle terminate job button events from the upload g code controller
 		importGCodePanel.gCodeConsoleView.stopJobButton.addActionListener(
 				new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				importGCodePanel.stopJobButtonStates();
-			}
-		});
+					@Override
+					public void actionPerformed(ActionEvent e) {
+						importGCodePanel.stopJobButtonStates();
+					}
+				});
 		//handle validate job button so that it traverses g code and checks for errors
 		importGCodePanel.selectInputView.validateGCodeButton.addActionListener(
 				new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				importGCodePanel.validateGCode(connectionSettings.getWidth(), connectionSettings.getDepth(), 
-						connectionSettings.getHeight());
-				
-			}
-		});
+					@Override
+					public void actionPerformed(ActionEvent e) {
+						importGCodePanel.validateGCode(connectionSettings.getWidth(), connectionSettings.getDepth(), 
+								connectionSettings.getHeight());
+
+					}
+				});
+		//firstPartPositionButton on definePartsController
+		definePartsController.addNewPartsView.firstPartPositionButton.addActionListener(
+				new ActionListener() {
+					@Override
+					public void actionPerformed(ActionEvent e) {
+						definePartsController.addNewPartsView.setXinitial(currentX);
+						definePartsController.addNewPartsView.setYinitial(currentY);
+						definePartsController.addNewPartsView.setFirstPartDefinitionStatusPositive();
+					}
+				});
+		//lastPartPositionButton on definePartsController
+		definePartsController.addNewPartsView.lastPartPositionButton.addActionListener(
+				new ActionListener() {
+					@Override
+					public void actionPerformed(ActionEvent e) {
+						definePartsController.addNewPartsView.setXfinal(currentX);
+						definePartsController.addNewPartsView.setYfinal(currentY);
+						definePartsController.addNewPartsView.setLastPartDefinitionStatusPositive();
+					}
+				});
 	}
 
 	/**
@@ -724,7 +744,7 @@ public class PNPMainController extends JPanel implements UsbEvent {
 			else{
 				System.out.println("PNPMainController: UsbReadEvent -> PIC Returned Error: " + picReturnCommand.getErrorType());
 			}
-			
+
 		}
 		//we have received return value from PIC, return CTS to true, allowing PNP Application
 		//to continue sending commands to PIC
@@ -759,18 +779,18 @@ public class PNPMainController extends JPanel implements UsbEvent {
 		importGCodePanel.updateJobStatus("Transmitting G Code at Line: " + currentInstructionIndex);
 		processInstruction(currentInstructionIndex);
 	}
-	
+
 	private void processInstruction(int currentInstructionIndex){
 		//skip over blank lines and comments
 		while(gCodeInstructions.get(currentInstructionIndex).matches("\\s*") || 
 				gCodeInstructions.get(currentInstructionIndex).trim().charAt(0) == ';'){
-					currentInstructionIndex++;
-				}
+			currentInstructionIndex++;
+		}
 		importGCodePanel.updateJobStatus("Transmitting G Code at Line: " + currentInstructionIndex);
 		if(sendMessage(gCodeInstructions.get(currentInstructionIndex))){
 			System.out.println("\nPNPMainController -> processInstruction: Instruction at line " + 
 					currentInstructionIndex + " was processed without error");
-			
+
 		}
 		else{
 			System.out.println("\nPNPMainController -> processInstruction: Instruction at line " + 
@@ -778,7 +798,7 @@ public class PNPMainController extends JPanel implements UsbEvent {
 			importGCodePanel.updateJobStatus("Error Transmitting G Code at Line: " + currentInstructionIndex);
 		}
 	}
-	
+
 	/**
 	 * Default Serial Version UID
 	 */
@@ -819,7 +839,7 @@ public class PNPMainController extends JPanel implements UsbEvent {
 	List<String> gCodeInstructions;
 	private int currentInstructionIndex;
 	private boolean jobPaused;
-	
+
 	//home commands
 	private final String HOME_X = "G1 X0";
 	private final String HOME_Y = "G1 Y0";
