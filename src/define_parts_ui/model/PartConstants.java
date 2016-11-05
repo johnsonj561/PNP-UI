@@ -17,7 +17,7 @@ public class PartConstants {
 	
 	/**
 	 * Return list of available tape cavity pitch values
-	 * Values begin at 4.00mm and increase in increments of 4.0mm, per industry standards
+	 * Values begin at 4mm and increase in increments of 4.0mm, per industry standards
 	 * @return String[] tapeCavityPitchValues
 	 */
 	public static String[] getTapeCavityPitchValues(){
@@ -38,6 +38,6 @@ public class PartConstants {
 	}
 	
 	
-	private static String[] availableFootprints = {"C-0805", "R-0805", "C-0603", "R-0603", "SOT-223"};
-	private static String[] tapeCavityPitchValues = {"4.00", "8.00", "12.00", "16.00", "20.00", "24.00", "28.00", "32.00"};
+	private static String[] availableFootprints = {"C0805", "R0805", "C0603", "R0603", "SOT-223"};
+	private static String[] tapeCavityPitchValues = {"4", "8", "12", "16", "20", "24", "28", "32"};
 }

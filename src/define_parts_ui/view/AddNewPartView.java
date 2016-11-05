@@ -293,6 +293,22 @@ public class AddNewPartView extends JPanel{
 	}
 	
 	/**
+	 * Get Cavity Pitch
+	 * @return double cavityPitch
+	 */
+	public String getCavityPitch(){
+		return (String) tapeCavityPitchComboBox.getSelectedItem();
+	}
+	
+	/**
+	 * Set the cavity pitch of current part tape
+	 * @param pitch
+	 */
+	public void setCavityPitch(String pitch){
+		tapeCavityPitchComboBox.setSelectedItem(pitch);
+	}
+	
+	/**
 	 * Return value of x initial, the x coordinate of 1st part in row
 	 * @return double xInitial
 	 */

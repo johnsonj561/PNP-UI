@@ -32,7 +32,7 @@ public class PartsFileParser {
 	 * Generates an List<String> where each element of list contains the features of 1 part
 	 * @return ArrayList<String> partList
 	 */
-	public List<String> makePartStringList(){
+	private List<String> makePartStringList(){
 		List<String> partList = null;
 		try{
 			 partList = Files.readAllLines(Paths.get(partInputPath), Charset.defaultCharset());
@@ -69,9 +69,15 @@ public class PartsFileParser {
 		ArrayList<Part> partArray = new ArrayList<Part>();
 		for(String part : partsList){
 			String[] features = parsePartAttributes(part);
-			partArray.add(new Part(Integer.parseInt(features[0]), features[1], features[2], 
-					Double.parseDouble(features[3]), Double.parseDouble(features[4]), Double.parseDouble(features[5]),
-					Double.parseDouble(features[6]), features[7]));
+			Part p = new Part(Integer.parseInt(features[0]), features[1], features[2], features[3],
+					Double.parseDouble(features[4]), Double.parseDouble(features[5]), Double.parseDouble(features[6]),
+					Double.parseDouble(features[7]), features[8]);
+			if(p.isValidPartPosition()){
+				partArray.add(p);
+			}
+			else{
+				return null;
+			}
 		}
 		return partArray;
 	}
