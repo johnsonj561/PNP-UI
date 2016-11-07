@@ -20,6 +20,9 @@ public class EagleSMTComponent extends SMTComponent{
 			description = attributes[0];
 			xCoordinate = attributes[1];
 			yCoordinate = attributes[2];
+			//add PCB's offset values to the x/y coordinates then convert back to String
+			xCoordinate = Double.parseDouble(xCoordinate) + PCB_X_OFFSET + "";
+			yCoordinate = Double.parseDouble(yCoordinate) + PCB_Y_OFFSET + "";
 			rotation = attributes[3];
 			value = attributes[4];
 			packageType = attributes[5];
@@ -46,6 +49,7 @@ public class EagleSMTComponent extends SMTComponent{
 	public String getDescription() {
 		return description;
 	}
+	
 	/**
 	 * Set component description attribute
 	 * @param String description of component as String
@@ -53,6 +57,7 @@ public class EagleSMTComponent extends SMTComponent{
 	public void setDescription(String description) {
 		this.description = attributeList[0] = description;
 	}
+	
 	/**
 	 * Get component X Coordinate
 	 * @return String X Coordinate of component center
@@ -60,6 +65,7 @@ public class EagleSMTComponent extends SMTComponent{
 	public String getxCoordinate() {
 		return this.xCoordinate;
 	}
+	
 	/**
 	 * Set component X Coordinate
 	 * @param String xCoordinate of component center
@@ -67,6 +73,7 @@ public class EagleSMTComponent extends SMTComponent{
 	public void setxCoordinate(String xCoordinate) {
 		this.xCoordinate = attributeList[1] = xCoordinate;
 	}
+	
 	/**
 	 * Get component Y Coordinate
 	 * @return String Y Coordinate of component center
@@ -74,6 +81,7 @@ public class EagleSMTComponent extends SMTComponent{
 	public String getyCoordinate() {
 		return yCoordinate;
 	}
+	
 	/**
 	 * Set component Y Coordinate
 	 * @param String yCoordinate of component center
@@ -81,6 +89,7 @@ public class EagleSMTComponent extends SMTComponent{
 	public void setyCoordinate(String yCoordinate) {
 		this.yCoordinate = attributeList[2] = yCoordinate;
 	}
+	
 	/**
 	 * Get component angle of rotation
 	 * @return String rotation of component
@@ -88,6 +97,7 @@ public class EagleSMTComponent extends SMTComponent{
 	public String getRotation() {
 		return rotation;
 	}
+	
 	/**
 	 * Set component angle of rotation
 	 * @param String rotation of component
@@ -95,6 +105,7 @@ public class EagleSMTComponent extends SMTComponent{
 	public void setRotation(String rotation) {
 		this.rotation = attributeList[3] = rotation;
 	}
+	
 	/**
 	 * Get value of component
 	 * @return String value of component
@@ -102,6 +113,7 @@ public class EagleSMTComponent extends SMTComponent{
 	public String getValue() {
 		return value;
 	}
+	
 	/**
 	 * Set value of component
 	 * @param String value o component
@@ -109,6 +121,7 @@ public class EagleSMTComponent extends SMTComponent{
 	public void setValue(String value) {
 		this.value = attributeList[4] = value;
 	}
+	
 	/**
 	 * Get package type of component
 	 * @return String packageType of component
@@ -116,6 +129,7 @@ public class EagleSMTComponent extends SMTComponent{
 	public String getPackageType() {
 		return packageType;
 	}
+	
 	/**
 	 * Set package type of component
 	 * @param String packageType of component
@@ -124,6 +138,13 @@ public class EagleSMTComponent extends SMTComponent{
 		this.packageType = attributeList[5] = packageType;
 	}
 
+	/**
+	 * Return true if component is an IC that needs to have angle verified by Computer Vision
+	 * @return
+	 */
+	public boolean isIC(){
+		return isIC;
+	}
 	
 	private String[] attributeTitles = {"Description", "X Coordinate", "Y Coordinate", "Rotation", "Value", "Package"};
 	public static final int ATTRIBUTE_COUNT = 6;
@@ -134,5 +155,6 @@ public class EagleSMTComponent extends SMTComponent{
 	private String value;
 	private String packageType;
 	private boolean isValidComponent;
+	private boolean isIC;
 	
 }

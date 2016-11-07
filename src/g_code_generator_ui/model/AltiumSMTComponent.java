@@ -23,6 +23,9 @@ public class AltiumSMTComponent extends SMTComponent{
 			footprint = attributeList[1];
 			xCoordinate = attributeList[2];
 			yCoordinate = attributeList[3];
+			//add PCB's offset values to the x/y coordinates then convert back to String
+			xCoordinate = Double.parseDouble(xCoordinate) + PCB_X_OFFSET + "";
+			yCoordinate = Double.parseDouble(yCoordinate) + PCB_Y_OFFSET + "";
 			xReference = attributeList[4];
 			yReference = attributeList[5];
 			xPad = attributeList[6];
@@ -212,6 +215,13 @@ public class AltiumSMTComponent extends SMTComponent{
 		this.comment = attributeList[10] = comment;
 	}
 
+	/**
+	 * Return true if component is an IC that needs to have angle verified by Computer Vision
+	 * @return
+	 */
+	public boolean isIC(){
+		return isIC;
+	}
 
 
 	private String[] attributeTitles = {"Ref Designator", "Footprint", "X Coordinate", "Y Coordinate", 
@@ -229,5 +239,5 @@ public class AltiumSMTComponent extends SMTComponent{
 	private String rotation;
 	private String comment;
 	private boolean isValidComponent;
-	
+	private boolean isIC;
 }
