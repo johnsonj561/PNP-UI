@@ -36,9 +36,7 @@ public class DefinePartsController extends JPanel{
 	public DefinePartsController(){
 		initUI();
 		initButtons();
-		//part number acts as an ID to keep track of total number of parts
 		partID = editPartID = 0;
-		//array list to store list of all parts as String 
 		definedPartList = new ArrayList<Part>();
 	}
 
@@ -76,7 +74,6 @@ public class DefinePartsController extends JPanel{
 		this.add(savePartFileView);
 		this.add(addNewPartsTitle);
 		this.add(addNewPartsView);
-
 	}
 
 	private void initButtons(){
@@ -119,7 +116,7 @@ public class DefinePartsController extends JPanel{
 	 * @param partNumber
 	 */
 	private void initNewPartButtons(final int partNumber){
-		//the buttons we are initializing belong to the last element in the list
+		//button being initializing belongs to the last element in the list
 		int lastIndex = definedPartListView.definedPartDisplayList.size() - 1;
 		definedPartListView.definedPartDisplayList.get(lastIndex).deleteButton.addActionListener(
 				new ActionListener() {
@@ -172,7 +169,6 @@ public class DefinePartsController extends JPanel{
 			updateErrorMessage("Save Part When Finished Editing");
 			refreshUI();
 		}
-		//else do nothing, if part wasn't found, nothing will happen
 	}
 
 	/**
