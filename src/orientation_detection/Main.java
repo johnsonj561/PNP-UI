@@ -1,4 +1,5 @@
 package orientation_detection;
+import javax.swing.JOptionPane;
 
 public class Main {
 
@@ -8,10 +9,11 @@ public class Main {
 		
 		if(compFinder != null){
 			compFinder.captureImageData();
-			System.out.println("X: " + compFinder.getXCenter() + 
-								"\nY: " + compFinder.getYCenter() +
-								"\nOrientation: " + compFinder.getOrientation());
+			String output = "X: " + compFinder.getXCenter() + 
+					"\nY: " + compFinder.getYCenter() +
+					"\nOrientation: " + compFinder.getOrientation();
+			JOptionPane.showMessageDialog(null, output, "Component Orientation", JOptionPane.INFORMATION_MESSAGE);
+			
 		}
 	}
-	
 }
