@@ -406,7 +406,7 @@ public class AddNewPartView extends JPanel{
 	private JLabel componentValueSelectionLabel;
 	private JTextField componentValueTextField;
 	private JLabel componentValueDescription;
-	private String VALUE_DESCRIPTION = "Ex) 10u, 100R, 100kR";
+	private String VALUE_DESCRIPTION = "Ex) 10uF, 15pF, 100k, 220, Green";
 	//set cavity pitch of component tape
 	private JPanel tapeCavityPitchPanel;
 	private JLabel tapeCavityPitchLabel;
