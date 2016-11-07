@@ -3,9 +3,11 @@ package g_code_generator_ui.controller;
 import g_code_generator_ui.controller.CentroidParser;
 import g_code_generator_ui.model.AltiumSMTComponent;
 import g_code_generator_ui.model.EagleSMTComponent;
-
+import java.util.ArrayList;
 import java.util.List;
-
+import define_parts_ui.controller.PartsFileParser;
+import define_parts_ui.model.Part;
+import define_parts_ui.model.XYCoordinate;
 
 /**
  * GCodeGenerator class accepts Eagle and Altium centroid files and component part files as input
@@ -25,34 +27,32 @@ public class GCodeGenerator {
 		centroidFilePath = centroidPath;
 		partsFilePath = partsPath;
 		inputFileType = fileType;
-		//Initialize CentroidParsers and generate SMTComponent arrays
 		isValidInput = parseInputFiles();
 	}	
 
 	/**
-	 * Initialize CentroidParsers and generate SMTComponent arrays that store all components
-	 * being placed on PCB and locations of all parts (reels/trays)
+	 * Initialize CentroidParser and generate SMTComponent arrays that store all components
+	 * being placed on PCB and identify locations of all parts (reels/trays)
 	 */
 	private boolean parseInputFiles(){
 		//flags to detect correct parse job
 		boolean centroidParseResult;
 		boolean partsParseResult;
-		//create a Centroid parser that will parse the PCB Centroid File and the Parts File
+		//parser for PCB centroid file
 		centroidParser = new CentroidParser(centroidFilePath);
 		centroidComponentList = centroidParser.getComponentList();
-		partsParser = new CentroidParser(partsFilePath);
-		partsComponentList = partsParser.getComponentList();
-
+		//parse for part position file
+		partsParser = new PartsFileParser(partsFilePath);
 		//generate appropriate array of components to be placed and parts from reels/trays
 		if(inputFileType == EAGLE_CENTROID_FILE){
 			centroidParseResult = generateEagleComponentArrayFromCentroid();
-			partsParseResult = generateEagleComponentArrayFromParts();
-			System.out.println("Centroid and Parts Files parsed.");
+			partsParseResult = generatePartsArray();
+			System.out.println("Centroid File Parsed");
 		}
 		else if(inputFileType == ALTIUM_CENTROID_FILE){
 			centroidParseResult = generateAltiumComponentArrayFromCentroid();
-			partsParseResult = generateAltiumComponentArrayFromParts();
-			System.out.println("Centroid and Parts Files parsed");
+			partsParseResult = generatePartsArray();
+			System.out.println("Centroid File Parsed");
 		}
 		else{
 			centroidParseResult = partsParseResult = false;
@@ -66,10 +66,8 @@ public class GCodeGenerator {
 	 * Common start up settings include: units, absolute coordinates, home x coord, home y coord, home z coord, baudrate
 	 */
 	public String initializeGCode(){
-		String gCode = ";initializeGCode() configures start up settings. See GCodeGenerator.py to change\n";
-		gCode += "G21; Set units to millimeters\nG90; Set absolute coordinates\nG28 X0 Y0; Home x and y axis\n";
-		gCode += "G21; Set units to millimeters\nG90; Set absolute coordinates\nG28 X0 Y0; Home x and y axis\n";
-		gCode += "G28 Z0; Home Z axis\nG1 F3000; Set feed rate (speed) for first move\n\n";
+		String gCode = ";G21; Set units to millimeters\n;G90; Set absolute coordinates\nG1 Z4;lift head\nG28; Home x and y axis\n";
+		gCode += "G1 F3000; Set feed rate (speed) for first move\n\n";
 		return gCode;
 	}
 
@@ -82,11 +80,16 @@ public class GCodeGenerator {
 		if(inputFileType == EAGLE_CENTROID_FILE){
 			for(int i = 0; i < eagleInputComponents.length; i++){
 				gCode += moveToPart(eagleInputComponents[i]);
+				gCode += rotateHead(eagleInputComponents[i].getRotation());
 				gCode += pickUpComponent();
+				gCode += rotateHead("0.00");
+				//if alignment through CV is required, move to light box
+				if(eagleInputComponents[i].isIC()){
+					gCode += moveToLocation(LIGHT_BOX_X, LIGHT_BOX_Y);
+					//G56 notifies UI to rotate IC until angle is 0
+					gCode += "G56\n";
+				}
 				gCode += moveToLocation(eagleInputComponents[i].getxCoordinate(), eagleInputComponents[i].getyCoordinate());
-				//if requires alignment, move to light box
-				//gCode += moveToLocation(Double.parseDouble(eagleInputComponents[i].getxCoordinate()), 
-				//		Double.parseDouble(eagleInputComponents[i].getyCoordinate()));
 				gCode += lowerComponent() + "\n";
 			}
 			return gCode;
@@ -94,11 +97,16 @@ public class GCodeGenerator {
 		else if(inputFileType == ALTIUM_CENTROID_FILE){
 			for(int i = 0; i < altiumInputComponents.length; i++){
 				gCode += moveToPart(altiumInputComponents[i]);
+				gCode += rotateHead(altiumInputComponents[i].getRotation());
 				gCode += pickUpComponent();
+				gCode += rotateHead("0.0");
+				//if alignment through CV is required, move to light box
+				if(altiumInputComponents[i].isIC()){
+					gCode += moveToLocation(LIGHT_BOX_X, LIGHT_BOX_Y);
+					//G56 notifies UI to rotate IC until angle is 0
+					gCode += "G56\n";
+				}
 				gCode += moveToLocation(altiumInputComponents[i].getxCoordinate(), altiumInputComponents[i].getyCoordinate());
-				//if requires alignment, move to light box
-				//gCode += moveToLocation(Double.parseDouble(eagleInputComponents[i].getxCoordinate()), 
-				//		Double.parseDouble(eagleInputComponents[i].getyCoordinate()));
 				gCode += lowerComponent() + "\n";
 			}
 			return gCode;
@@ -108,6 +116,15 @@ public class GCodeGenerator {
 	}
 
 	/**
+	 * Rotate head to angle
+	 * @param theta angle to rotate
+	 * @return String gCode instruction to rotate head
+	 */
+	private String rotateHead(String theta){
+		return ";G1 R" + theta + ";rotating head to match angle of part\n";
+	}
+	
+	/**
 	 * Generates G Code commands that move PnP head to location of part identified by component Packate Type
 	 * @param component EagleSMTComponent to be picked up from part stack
 	 * @return String G Code instructions that move to component's part stack for pick up
@@ -115,15 +132,20 @@ public class GCodeGenerator {
 	private String moveToPart(EagleSMTComponent component){
 		if(inputFileType == EAGLE_CENTROID_FILE){
 			String componentPackageType = component.getPackageType();
-			for(EagleSMTComponent part : eagleParts){
-				if(componentPackageType.contentEquals(part.getPackageType())){
-					return "G1 X" + part.getxCoordinate() + " Y" + part.getyCoordinate() + "; moving to part for pick up\n";
+			String componentValue = component.getValue();
+			for(Part part : partArray){
+				if(componentPackageType.contentEquals(part.getFootprint()) 
+						&& componentValue.contentEquals(part.getValue())){
+					//if we found matching footprint and value available for use, return G Code to This Part
+					XYCoordinate coordinates = part.getNextPartLocation();
+					if(coordinates != null){
+						return "G1 Z4 F300;lift head before moving" +
+								"\nG1 X" + coordinates.getxCoordinate() + 
+								" Y" + coordinates.getyCoordinate() + 
+								" F5000\t;moving head to next part\n";
+					}
 				}
 			}
-		}
-		else{
-			System.out.println("Error GCodeGenerate:moveToPart(EagleSMTComponent component): inputFileType" +
-					" and component type do not match");
 		}
 		return "\nmoveToPart(EagleSMTComponent) \nPART NOT FOUND\n";
 	}
@@ -136,17 +158,20 @@ public class GCodeGenerator {
 	private String moveToPart(AltiumSMTComponent component){
 		if(inputFileType == ALTIUM_CENTROID_FILE){
 			String componentRefDesignator = component.getRefDesignator();
-			for(AltiumSMTComponent part : altiumParts){
-				if(componentRefDesignator.contentEquals(part.getRefDesignator())){
-					return "G1 X" + part.getxCoordinate() + " Y" + part.getyCoordinate() + "; moving to part for pick up\n";
+			for(Part part : partArray){
+				if(componentRefDesignator.contentEquals(part.getFootprint())){
+					//if we found part and there is 1 available for use, return G Code to This Part
+					XYCoordinate coordinates = part.getNextPartLocation();
+					if(coordinates != null){
+						return "G1 Z4 F300;lift head before moving" +
+								"\nG1 X" + coordinates.getxCoordinate() + 
+								" Y" + coordinates.getyCoordinate() + 
+								" F5000\t;moving head to next part\n";
+					}
 				}
 			}
 		}
-		else{
-			System.out.println("Error GCodeGenerator:moveToPart(AltiumSMTComponent component): inputFileType" +
-					" and component type do not match");
-		}
-		return "\nmoveToPart(AltiumSMTComponent) \nPART NOT FOUND\n";
+		return "\nPART NOT FOUND\n";
 	}
 
 	/**
@@ -156,7 +181,10 @@ public class GCodeGenerator {
 	 * @return String G Code instructions that move to location (xCoord, yCoord)
 	 */
 	private String moveToLocation(String xCoord, String yCoord){
-		return "G1 X" + xCoord + " Y" + yCoord + "; moving to placement location\n";
+		return "G1 Z4 F300;lift head before moving" +
+				"G1 X" + xCoord + 
+				" Y" + yCoord + 
+				" F1000 ;moving head to location (" + xCoord + ", " + yCoord + ")\n";
 	}
 
 	/**
@@ -164,7 +192,10 @@ public class GCodeGenerator {
 	 * @return String G Code instructions that lower head, turn on vacuum, and lift part 
 	 */
 	private String pickUpComponent(){
-		return "G1 Z15; Lower Z axis to component\nM10; Vacuum On\nG1 Z0; Raise Z axis to home\n";
+		return "G1 Z0 F300;Lower head to component" +
+				"\nM10; Vacuum On" +
+				"\nG4 P2000;delay" +
+				"\nG1 Z4 F300;Lift head off table\n";
 	}
 
 	/**
@@ -172,7 +203,10 @@ public class GCodeGenerator {
 	 * @return String G Code instructions that lower component, turn off vacuum, and raise head
 	 */
 	private String lowerComponent(){
-		return "G1 Z15; Lower Z axis to PCB board\nM11; Vacuum Off\nG1 Z0; Raise Z axis to home\n";
+		return "G1 Z0 F300;Lower head to PCB board" +
+				"\nM11; Vacuum Off" +
+				"\nG4 P2000;delay" +
+				"\nG1 Z4 F300;Lift head off PCB board\n";
 	}
 
 	/**
@@ -232,59 +266,16 @@ public class GCodeGenerator {
 	}
 
 	/**
-	 * Produces an array of EagleSMTComponents from input parts file (reels/tray locations)
-	 * @return true if part's SMTComponent list generated wit no error
+	 * Generate an array of Parts found in part input file
+	 * @return true if all parts defined are valid
 	 */
-	private boolean generateEagleComponentArrayFromParts(){
-		if(inputFileType == EAGLE_CENTROID_FILE){
-			//array of EagleSMTComponent objects to store each component object
-			eagleParts = new EagleSMTComponent[partsComponentList.size()];
-			//for each partsComponent in List, generate corresponding EagleSMTComponent
-			//add each EagleSMTComponent to the eagleComponents array
-			for(int i = 0; i < partsComponentList.size(); ++i){
-				//generate Eagle SMTComponent and add to component array
-				eagleParts[i] = new EagleSMTComponent(partsParser.parseComponentAttributes(
-						partsComponentList.get(i), EagleSMTComponent.ATTRIBUTE_COUNT));
-				//if we encounter a bad part, we halt and return error to user
-				if(!eagleParts[i].isValidComponent()){
-					return false;
-				}
-			}
+	private boolean generatePartsArray(){
+		//create an array of parts
+		partArray = partsParser.makePartsArray();
+		if(partArray != null){
 			return true;
 		}
-		else{
-			System.out.println("\nError GCodeGenerator: generateEagleArrayFromParts(): verify that you are using" +
-					" correct input file type\n");
-			return false;
-		}
-	}
-
-	/**
-	 * Produces an array of AltiumSMTComponents from input parts file (reels/tray locations)
-	 * @return true if part's SMTComponent list generated wit no error
-	 */
-	private boolean generateAltiumComponentArrayFromParts(){
-		if(inputFileType == ALTIUM_CENTROID_FILE){
-			//array of AltiumSMTComponent objects to store each component object
-			altiumParts = new AltiumSMTComponent[partsComponentList.size()];
-			//for each partsComponent in List, generate corresponding AltiumSMTComponent
-			//add each AltiumSMTComponent to the altiumParts array
-			for(int i = 0; i < partsComponentList.size(); ++i){
-				//generate Altium SMTComponent and add to component array
-				altiumParts[i] = new AltiumSMTComponent(partsParser.parseComponentAttributes(
-						partsComponentList.get(i), AltiumSMTComponent.ATTRIBUTE_COUNT));
-				//if we encounter a bad part, we halt and return error to user
-				if(!altiumParts[i].isValidComponent()){
-					return false;
-				}
-			}
-			return true;
-		}
-		else{
-			System.out.println("\nError GCodeGenerator: generateAltiumArrayFromParts(): verify that you are using" +
-					" correct input file type\n");
-			return false;
-		}
+		return false;
 	}
 
 	/**
@@ -298,8 +289,7 @@ public class GCodeGenerator {
 	private EagleSMTComponent[] eagleInputComponents;
 	private AltiumSMTComponent[] altiumInputComponents;
 	//locations of parts
-	private EagleSMTComponent[] eagleParts;
-	private AltiumSMTComponent[] altiumParts;
+	private ArrayList<Part> partArray;
 	//centroid file contains placement of each component
 	private String centroidFilePath;
 	//parts file contains location of all parts
@@ -310,11 +300,12 @@ public class GCodeGenerator {
 	public static final int ALTIUM_CENTROID_FILE = 2;
 	//centroid parsers to parse input files
 	private CentroidParser centroidParser;
-	private CentroidParser partsParser;
+	private PartsFileParser partsParser;
 	//lists to store Strings of component attributes
 	private List<String> centroidComponentList;
-	private List<String> partsComponentList;
 	//flag to detect proper parsing
 	private boolean isValidInput;
-
+	//board offsets define bottom left corner of PCB board
+	private final String LIGHT_BOX_X = "100.0";
+	private final String LIGHT_BOX_Y = "100.0";
 }
