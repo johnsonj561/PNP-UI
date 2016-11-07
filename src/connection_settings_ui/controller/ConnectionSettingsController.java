@@ -27,8 +27,6 @@ public class ConnectionSettingsController extends JPanel{
 	 * @throws SerialPortException 
 	 */
 	public ConnectionSettingsController() throws SerialPortException{
-		//initialize settings to default values
-		//initialize UI
 		initUI();
 	}
 
@@ -67,9 +65,6 @@ public class ConnectionSettingsController extends JPanel{
 		//port selection
 		portSelectionInput = new SettingsPortSelectionView();
 		portSelectionInput.setAlignmentX(JPanel.LEFT_ALIGNMENT);
-
-
-
 		//Connection Status Title
 		connectionStatusTitle = new SettingsTitleView("Connection Status");
 		connectionStatusTitle.setAlignmentX(JPanel.LEFT_ALIGNMENT);
@@ -81,11 +76,9 @@ public class ConnectionSettingsController extends JPanel{
 		connectionButtonPanel.setLayout(new BoxLayout(connectionButtonPanel, BoxLayout.Y_AXIS));
 		connectionButtonPanel.add(connectionStatusTitle);
 		connectionButtonPanel.add(connectionButtons);
-	
 		//emergency stop panel
 		emergencyStopPanel = new EmergencyStopView();
 		emergencyStopPanel.setAlignmentX(JPanel.LEFT_ALIGNMENT);
-		
 		//create panel to package connection status/buttons and emergency stop button
 		connectionButtonAndEmergencyStopPanel = new JPanel();
 		connectionButtonAndEmergencyStopPanel.setLayout(new BoxLayout(connectionButtonAndEmergencyStopPanel, BoxLayout.X_AXIS));
@@ -93,7 +86,6 @@ public class ConnectionSettingsController extends JPanel{
 		connectionButtonAndEmergencyStopPanel.add(connectionButtonPanel);
 		connectionButtonAndEmergencyStopPanel.add(Box.createRigidArea(new Dimension(50, 0)));
 		connectionButtonAndEmergencyStopPanel.add(emergencyStopPanel);
-
 		//Add individual components to this.JPanel for final display, laid on vertically along y Axis
 		this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		this.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));
@@ -200,8 +192,6 @@ public class ConnectionSettingsController extends JPanel{
 	 * Default serial version UID
 	 */
 	private static final long serialVersionUID = 1L;
-
-
 
 	/**
 	 * Class variables
