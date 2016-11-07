@@ -156,7 +156,7 @@ public class UsbDevice {
 				return true;
 			} catch (SerialPortException e) {
 				System.out.println("\nUsbDevice: -> closePort():Error closing port");
-				e.printStackTrace();
+				//e.printStackTrace();
 			}
 		}
 		isOpen = false;
