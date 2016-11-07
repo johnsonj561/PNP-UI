@@ -6,6 +6,7 @@ package g_code_generator_ui.model;
  * G1 = linear Move (X, Y, Z, R)
  * G4 = delay (P, R) = milliseconds, S = seconds)
  * G28 = home
+ * G88 = light box
  * M10 = vacuum on, M11 = vacuum off
  * X = X coordinate (mm)
  * Y = Y coordinate (mm)
@@ -118,8 +119,8 @@ public class GCodeCommand {
 					return false;
 				}
 			}
-			//if G28 command, there should be no values for X Y Z R or F
-			if(gValue == 28){
+			//if G28 or G56 command, there should be no values for X Y Z R or F
+			if(gValue == 28 || gValue == 56){
 				if(xMove || yMove || zMove || rMove || fCommand){
 					System.out.println("G28 can not have a value for X Y Z R F");
 					return false;
@@ -175,6 +176,7 @@ public class GCodeCommand {
 
 		//If instruction is an M command, validate
 		//Note - M10/M11 is Vacuum On/Off instructions
+		//M12/M13 is Lightbox on/off instructions
 		if(ismCommand()){
 			//1st token must contain the M command
 			if(instructionTokens[0].charAt(0) != 'M'){
@@ -222,11 +224,11 @@ public class GCodeCommand {
 			//\\d{1,2} checks for 1 or 2 digits, covers cases G1, G4, G28
 			if(temp.matches("^\\d{1,2}$")){
 				gValue = Integer.parseInt(temp);
-				if(gValue == 1 || gValue == 4 || gValue == 28){
+				if(gValue == 1 || gValue == 4 || gValue == 28 || gValue == 56){
 					gCommand = true;
 				}
 				else{
-					System.out.println("G value expects a 1, 4, or 28");
+					System.out.println("G value expects a 1, 4, 28, or 56");
 					isValidCommand = false;
 				}
 			}
@@ -241,7 +243,7 @@ public class GCodeCommand {
 			//\\d{2} checks for 2 digits, covers cases M10 and M11
 			if(temp.matches("^\\d{2}$")){
 				mValue = Integer.parseInt(temp);
-				if(mValue == 10 || mValue == 11){
+				if(mValue == 10 || mValue == 11 || mValue == 12 || mValue == 13){
 					mCommand = true;
 				}
 				else{
@@ -370,7 +372,7 @@ public class GCodeCommand {
 	}
 
 	/**
-	 * Get G value (1, 4, 28, or null)
+	 * Get G value (1, 4, 28, 56, or null)
 	 * @return int G value
 	 */
 	public int getgValue() {
@@ -533,6 +535,12 @@ public class GCodeCommand {
 		System.out.println(gCodeString);
 	}
 
+	public boolean isG56Command(){
+		if(gCommand && gValue == 56){
+			return true;
+		}
+		return false;
+	}
 
 	//store input g code instruction as array of tokens
 	private String[] instructionTokens;
