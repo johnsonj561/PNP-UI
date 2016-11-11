@@ -108,12 +108,13 @@ public class GCodeGeneratorController extends JPanel{
 	private void writeGCodeToEditor(){
 		//check for input paths
 		if(mPartsInput.getInputPath().length() > 0 && mCentroidInput.getInputPath().length() > 0){
-			GCodeGenerator mGCodeGenerator = new GCodeGenerator(
+			mGCodeGenerator = new GCodeGenerator(
 					mCentroidInput.getInputPath(), mPartsInput.getInputPath(), mProcessInputPanel.getJComboBoxValue());
 			if(mGCodeGenerator.isValidInput()){
 				gCodeOutput = mGCodeGenerator.initializeGCode();
 				gCodeOutput += mGCodeGenerator.generateGCode();
 				mGCodeEditorPanel.writeToEditor(gCodeOutput);
+				
 			}
 			else{
 				mGCodeEditorPanel.writeToEditor("Error Parsing Input Files" +
@@ -123,9 +124,8 @@ public class GCodeGeneratorController extends JPanel{
 		else{
 			mGCodeEditorPanel.writeToEditor("Please select valid input file paths");
 		}
-
 	}
-
+	
 	/**
 	 * Write text from G-Code Editor to output file and save locally as text file
 	 */
@@ -159,6 +159,15 @@ public class GCodeGeneratorController extends JPanel{
 	}
 
 	/**
+	 * Returns copy of updated parts file as a String
+	 * Each line contains 1 part's features in CSV format
+	 * @return String updated part file as a String
+	 */
+	public String getUpdatedPartsFileAsString(){
+		return mGCodeGenerator.getUpdatedPartString();
+	}
+	
+	/**
 	 * Default serial version UID
 	 */
 	private static final long serialVersionUID = 1L;
@@ -173,4 +182,5 @@ public class GCodeGeneratorController extends JPanel{
 	private GenerateGCodeButtonView mGenerateGCodeButtonPanel;
 	private GCodeEditorView mGCodeEditorPanel;
 	private String gCodeOutput;
+	private GCodeGenerator mGCodeGenerator;
 }

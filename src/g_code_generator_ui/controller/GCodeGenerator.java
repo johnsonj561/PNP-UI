@@ -92,7 +92,6 @@ public class GCodeGenerator {
 				gCode += moveToLocation(eagleInputComponents[i].getxCoordinate(), eagleInputComponents[i].getyCoordinate());
 				gCode += lowerComponent() + "\n";
 			}
-			return gCode;
 		}
 		else if(inputFileType == ALTIUM_CENTROID_FILE){
 			for(int i = 0; i < altiumInputComponents.length; i++){
@@ -109,10 +108,13 @@ public class GCodeGenerator {
 				gCode += moveToLocation(altiumInputComponents[i].getxCoordinate(), altiumInputComponents[i].getyCoordinate());
 				gCode += lowerComponent() + "\n";
 			}
-			return gCode;
 		}
-		return "Error: Invalid Centroid File Type Provided. Please use Altium or Eagle file types.";
-
+		else{
+			return "Error: Invalid Centroid File Type Provided. Please use Altium or Eagle file types.";
+		}
+		gCode += "\nG1 F8000\nG28;Job Complete, Return To Home";
+		tempPartString = updatePartFile();
+		return gCode;
 	}
 
 	/**
@@ -142,14 +144,14 @@ public class GCodeGenerator {
 						return "G1 Z4 F300;lift head before moving" +
 								"\nG1 X" + coordinates.getxCoordinate() + 
 								" Y" + coordinates.getyCoordinate() + 
-								" F5000\t;moving head to next part\n";
+								" F8000\t;moving head to next part\n";
 					}
 				}
 			}
 		}
 		return "\nmoveToPart(EagleSMTComponent) \nPART NOT FOUND\n";
 	}
-
+	
 	/**
 	 * Generates G Code commands that move PnP head to location of part identified by component Ref Designator
 	 * @param component AltiumSMTComponent to be picked up from part stack
@@ -166,7 +168,7 @@ public class GCodeGenerator {
 						return "G1 Z4 F300;lift head before moving" +
 								"\nG1 X" + coordinates.getxCoordinate() + 
 								" Y" + coordinates.getyCoordinate() + 
-								" F5000\t;moving head to next part\n";
+								" F8000\t;moving head to next part\n";
 					}
 				}
 			}
@@ -182,7 +184,7 @@ public class GCodeGenerator {
 	 */
 	private String moveToLocation(String xCoord, String yCoord){
 		return "G1 Z4 F300;lift head before moving" +
-				"G1 X" + xCoord + 
+				"\nG1 X" + xCoord + 
 				" Y" + yCoord + 
 				" F1000 ;moving head to location (" + xCoord + ", " + yCoord + ")\n";
 	}
@@ -285,6 +287,30 @@ public class GCodeGenerator {
 		return isValidInput;
 	}
 
+	/**
+	 * Updates part files and writes part features to tempPartString
+	 * @return String tempPartString
+	 */
+	private String updatePartFile(){
+		String tempParts = "";
+		for(Part part : partArray){
+			System.out.println("GCodeGenerator -> Updating parts files with new part counts");
+			part.updatePartCount();
+			System.out.println("GCodeGenerator -> Writing updated parts file to tempPartString");
+			tempParts += part.getPartFeatureString();
+		}
+		return tempParts;
+	}
+	
+	/**
+	 * Returns a copy of tempPartString which contains String representation of all part features
+	 * tempPartString is updated after G Code is generated, therefore representing parts file after PNP jobs
+	 * @return
+	 */
+	public String getUpdatedPartString(){
+		return tempPartString;
+	}
+	
 	//components to be placed
 	private EagleSMTComponent[] eagleInputComponents;
 	private AltiumSMTComponent[] altiumInputComponents;
@@ -308,4 +334,6 @@ public class GCodeGenerator {
 	//board offsets define bottom left corner of PCB board
 	private final String LIGHT_BOX_X = "100.0";
 	private final String LIGHT_BOX_Y = "100.0";
+	//string to hold updated part values
+	private String tempPartString;
 }
