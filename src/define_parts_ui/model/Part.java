@@ -24,13 +24,30 @@ public class Part {
 		//create an array of coordinates where each cell stores a part's (x,y) location
 		xyCoordinates = new XYCoordinate[count];
 		validPartLocations = calculatePartCoordinates();
-		//nextAvailablePart will always start out as the 1st part, index 0
-		nextAvailablePart = 0;
+		//nextAvailablePart will start as the last part
+		nextAvailablePart = count-1;
 		//calculate angle of part
 		theta = calculateRotation();
 		printCoordinates();
 	}
-	
+
+	/**
+	 * Updates part count, re-calculates coordinates of individual components, and re-calculates theta
+	 * Intended to be called after a PNP Job is complete, allowing machine to continue using same part's files
+	 */
+	public void updatePartCount(){
+		//nextAvailablePart was set to count -1 and decremented as components were used
+		//we update the count to = the ith part
+		count = nextAvailablePart + 1;
+		xFinal = xyCoordinates[nextAvailablePart].getxCoordinate();
+		yFinal = xyCoordinates[nextAvailablePart].getyCoordinate();
+		validPartLocations = calculatePartCoordinates();
+		theta = calculateRotation();
+		System.out.println("Part -> updatePartCount() complete. Printing coordinates of new parts:");
+		printCoordinates();
+	}
+
+
 	/**
 	 * Calculate orientation of part
 	 * Assume that part is laid horizontally along x-axis if deltaX is greater than deltaY
@@ -42,10 +59,10 @@ public class Part {
 			return 0;
 		}
 		/* If deltaX is greater than deltaY, then part tape is laid horizontal
-		*  Calculate angle about x axis
-		*  If yFinal is less yInitial, then part is rotated CW
-		*  If yFinal is greater than yInitial, then part is rotated CCW
-		*/
+		 *  Calculate angle about x axis
+		 *  If yFinal is less yInitial, then part is rotated CW
+		 *  If yFinal is greater than yInitial, then part is rotated CCW
+		 */
 		double dx = xFinal - xInitial;
 		double dy = yFinal - yInitial;
 		if(dx >= dy){
@@ -65,7 +82,7 @@ public class Part {
 			}
 		}
 	}
-	
+
 	/**
 	 * Get coordinates of next available part and increment nextAvailablePart counter
 	 * @return XYCoordinate of next available part
@@ -78,13 +95,13 @@ public class Part {
 		else{
 			XYCoordinate nextPart = xyCoordinates[nextAvailablePart];
 			//if we used the last part, set availablePart to -1
-			if(++nextAvailablePart > count){
+			if(--nextAvailablePart < 0){
 				nextAvailablePart = -1;
 			}
 			return nextPart;
 		}
 	}
-	
+
 	/**
 	 * Creates a comma separated list from the part's features
 	 * @return String of comma separated part features
@@ -93,14 +110,14 @@ public class Part {
 		return partID + ", " + footprint + ", " + value + ", " + cavityPitch + ", " + xInitial + ", " + yInitial + ", " +
 				xFinal + ", " + yFinal + ", " + count;	
 	}
-	
+
 	/**
 	 * Print part features to screen in comma separated list
 	 */
 	public void print(){
 		System.out.println(makePartFeatureString());
 	}
-	
+
 	/**
 	 * Returns true if part locations are valid.
 	 * Part locations are valid if the expected position matches the calculated position
@@ -109,7 +126,8 @@ public class Part {
 	public boolean isValidPartPosition(){
 		return validPartLocations;
 	}
-	
+
+
 	/**
 	 * Calculate the (x,y) position of every part on this tape of parts
 	 * Part positions are calculated by creating a line between 1st part and last part
@@ -152,10 +170,8 @@ public class Part {
 		}
 		//if calculated position of last part matches known position of last part, return true
 		//known(x,y) - EPSILON < calculated (x,y) < known(x,y) + EPSILON 
-		if((xyCoordinates[count-1].getxCoordinate() < (lastPartCoordinate.getxCoordinate() + EPSILON)
-				&& xyCoordinates[count-1].getxCoordinate() > lastPartCoordinate.getxCoordinate() - EPSILON) &&
-				(xyCoordinates[count-1].getyCoordinate() < lastPartCoordinate.getyCoordinate() + EPSILON
-						&& xyCoordinates[count-1].getyCoordinate() > lastPartCoordinate.getyCoordinate() - EPSILON)){	
+		if((Math.abs((xyCoordinates[count-1].getxCoordinate() - lastPartCoordinate.getxCoordinate())) < PartConstants.COORD_EPSILON) &&
+				(Math.abs((xyCoordinates[count-1].getyCoordinate() - lastPartCoordinate.getyCoordinate())) < PartConstants.COORD_EPSILON)){	
 			System.out.println("Part -> calculatePartCoordinates() -> Part Coordinates Calculated Without Error");
 			return true;
 		}
@@ -164,18 +180,18 @@ public class Part {
 				" match the expected position of last part.");
 		return false;
 	}
-	
+
 	/**
 	 * Print coordinates of all parts found between first part and last part
 	 */
 	public void printCoordinates(){
 		System.out.println("Printing part coordinates:");
-		for(XYCoordinate coord : xyCoordinates){
-			coord.print();
+		for(int i = 0; i < count; i++){
+			xyCoordinates[i].print();
 		}
 		System.out.println("Printing theta: " + theta);
 	}
-	
+
 	/**
 	 * Return copy of parts features in a comma separated String
 	 * @return
@@ -184,7 +200,7 @@ public class Part {
 		partFeatureString = makePartFeatureString();
 		return partFeatureString;
 	}
-	
+
 	/**
 	 * Get current part ID
 	 * @return int partID
@@ -208,7 +224,7 @@ public class Part {
 	public void setFootprint(String footprint) {
 		this.footprint = footprint;
 	}
-	
+
 	/**
 	 * Get value of part
 	 * @return String value
@@ -232,7 +248,7 @@ public class Part {
 	public int getCavityPitch(){
 		return cavityPitch;
 	}
-	
+
 	/**
 	 * Set cavity pitch
 	 * @param pitch
@@ -240,7 +256,7 @@ public class Part {
 	public void setCavityPitch(int pitch){
 		cavityPitch = pitch;
 	}
-	
+
 	/**
 	 * Get X coordinate of first part in part row
 	 * @return double xInitial
@@ -272,7 +288,7 @@ public class Part {
 	public void setyInitial(double yInitial) {
 		this.yInitial = yInitial;
 	}
-	
+
 	/**
 	 * Get X coordinate of last part in row
 	 * @return double xFinal
@@ -328,7 +344,7 @@ public class Part {
 	public boolean isReel(){
 		return isReel;
 	}
-	
+
 	/**
 	 * Return the angle theta of part
 	 * @return double theta
@@ -336,7 +352,8 @@ public class Part {
 	public double getTheta(){
 		return theta;
 	}
-	
+
+
 	//part features
 	private int partID;
 	private String footprint;
@@ -355,8 +372,8 @@ public class Part {
 	//flag that represents a tape reel of parts
 	//note that on tape parts are found in the same position every time, the reel feeds parts to loading area
 	private boolean isReel;
-	//epsilon value used for detecting error in calculations
-	private final double EPSILON = 0.03;
+	//boolean that declares true when part calculations are accurate
 	private boolean validPartLocations;
+	//index of next available part
 	private int nextAvailablePart;
 }
