@@ -41,4 +41,5 @@ public class PartConstants {
 	private static String[] availableFootprints = {"C0603", "C0805", "CHIP-LED805", "HC49UP", "M0603", "M0805", "R0603", 
 					"R0805", "SO14", "TO252"};
 	private static String[] tapeCavityPitchValues = {"4", "8", "12", "16", "20", "24", "28", "32"};
+	public static double COORD_EPSILON = 0.03;
 }
