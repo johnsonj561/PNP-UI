@@ -16,7 +16,6 @@ public class PICReturnValue {
 		picReturnString = picReturnMessage;
 		//check to see if PIC reply matches Xddd.ddd Yddd.ddd Zddd.ddd
 		if(picReturnString.matches(VALID_PIC_REGEX)){
-			System.out.println("PICReturnValue -> picReturnString.matches(VALID_PIC_REGEX");
 			isErrorMessage = false;
 			if(identifyPicCoordinates()){
 				System.out.println("PICReturnValue -> Coordinates identified");
