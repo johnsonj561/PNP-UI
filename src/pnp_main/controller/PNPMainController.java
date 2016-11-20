@@ -3,7 +3,7 @@ import g_code_generator_ui.model.GCodeCommand;
 import g_code_generator_ui.model.PICReturnValue;
 import g_code_generator_ui.controller.GCodeGeneratorController;
 import import_g_code_ui.controller.UploadGCodeController;
-
+import javax.swing.ImageIcon;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
@@ -12,10 +12,10 @@ import javax.swing.JPanel;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileNameExtensionFilter;
-
 import orientation_detection.ComponentFinder;
 import pnp_main.model.PNPConstants;
 import manual_control_ui.controller.ManualController;
+import manual_control_ui.view.JogSizeSlider;
 import connection_settings_ui.controller.ConnectionSettingsController;
 import connection_settings_ui.model.ConnectionSettingsModel;
 import define_parts_ui.controller.DefinePartsController;
@@ -26,8 +26,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintStream;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import jssc.SerialPortException;
 import jssc_usb.UsbDevice;
@@ -67,6 +71,12 @@ public class PNPMainController extends JPanel implements UsbEvent {
 		initUI();
 		//initialize buttons
 		initButtons();
+		//set std output to log file
+		defineLogFile();
+		//System.setOut(pnpLog);
+		//System.setErr(pnpLog);
+		System.out.println("New PNPMainController()\n");
+
 	}
 
 	/**
@@ -78,7 +88,7 @@ public class PNPMainController extends JPanel implements UsbEvent {
 		try {
 			connectionSettingsController = new ConnectionSettingsController();
 		} catch (SerialPortException e) {
-			System.out.println("PNPMainController: Error creating tabbed interface");
+			System.out.println("PNPMainController: Error creating tabbed interface (ConnectionSettingsController)\n");
 			e.printStackTrace();
 		}
 		tabbedPane.addTab("Connect Settings", null, connectionSettingsController, 
@@ -96,7 +106,7 @@ public class PNPMainController extends JPanel implements UsbEvent {
 		tabbedPane.addTab("Manual PNP Control", null, manualController, "Manual PNP Control");
 		//Create Parts Specifications
 		definePartsController = new DefinePartsController();
-		tabbedPane.addTab("Define Proejct Parts", null, definePartsController, "Define Footprints, Values, and Positioning");
+		tabbedPane.addTab("Define Project Parts", null, definePartsController, "Define Footprints, Values, and Positioning");
 		//add tabs to JPanel
 		add(tabbedPane);
 	}
@@ -129,6 +139,7 @@ public class PNPMainController extends JPanel implements UsbEvent {
 						connectionSettings.setDepth(connectionSettingsController.getPlatformDepth());
 						connectionSettings.setHeight(connectionSettingsController.getPlatformHeight());
 						connectionSettings.setStepSize(manualController.getStepSize());
+						connectionSettings.setFeedRate(connectionSettingsController.getFeedRate());
 						if(usbDevice != null && usbDevice.isOpen()){
 							connectionSettings.setConnected(true);
 						}
@@ -143,7 +154,6 @@ public class PNPMainController extends JPanel implements UsbEvent {
 					@Override			
 					public void actionPerformed(ActionEvent e) {
 						restoreDefaults();
-
 					}
 				});
 		//jog x plus button
@@ -202,6 +212,12 @@ public class PNPMainController extends JPanel implements UsbEvent {
 						sendMessage(manualController.getManualInstruction());
 					}
 				});
+		manualController.manualInstructionView.instructionInput.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				sendMessage(manualController.getManualInstruction());
+			}
+		});
 		//home all button returns x-y-z-r to 0 position
 		manualController.homeButtonView.homeAllButton.addActionListener(
 				new ActionListener() {
@@ -268,20 +284,7 @@ public class PNPMainController extends JPanel implements UsbEvent {
 				new ActionListener() {
 					@Override
 					public void actionPerformed(ActionEvent e) {
-						//if in PAUSED_STATE, resume processing
-						if(importGCodePanel.getJobState() == UploadGCodeController.PAUSED_STATE){
-							importGCodePanel.resumeJobButtonStates();
-							jobPaused = false;
-							processInstruction(currentInstructionIndex);
-						}
-						//else if in PROCESSING_STATE, pause machine
-						else if(importGCodePanel.getJobState() == UploadGCodeController.PROCESSING_STATE){
-							importGCodePanel.pauseJobButtonStates();
-							jobPaused = true;
-							int nextInstruction = currentInstructionIndex + 1;
-							importGCodePanel.updateJobStatus("Machine Paused. Next Line To Be Executed: " + nextInstruction);
-						}
-
+						pauseJobRoutine();
 					}
 				});
 		//handle terminate job button events from the upload g code controller
@@ -332,6 +335,9 @@ public class PNPMainController extends JPanel implements UsbEvent {
 		//Create and set up the window.
 		JFrame.setDefaultLookAndFeelDecorated(true);
 		JFrame frame = new JFrame("PIC N Place");
+		//ImageIcon img1 = new ImageIcon(res)
+		ImageIcon img = new ImageIcon("pnp-logo-32x32.png");
+		frame.setIconImage(img.getImage());
 		frame.setLocation(PNPConstants.JFRAME_X_LOC, PNPConstants.JFRAME_Y_LOC);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		//set preferred size, min size, and window start up position
@@ -360,6 +366,37 @@ public class PNPMainController extends JPanel implements UsbEvent {
 	}
 
 	/**
+	 * Create a log file to write std out and std err to
+	 * PNP Application will generate PNPLog directory in C directory if it does not exist
+	 * C:\PNPLog\MM.dd.yyyy-HH.mm.ss.txt
+	 */
+	private void defineLogFile(){
+		//create directory for PNP log files if it does not exist
+		File logDirectory = new File("C:/PNPLog");
+		if(!logDirectory.exists()){
+			logDirectory.mkdir();
+		}
+		//create text file with timestamp as name
+		String logFile = new SimpleDateFormat("MM.dd.yyyy-HH.mm.ss").format(new Date());
+		File file = new File("C:/PNPLog/" + logFile + ".txt");
+		if(!file.exists()){
+			try {
+				file.createNewFile();
+			} catch (IOException e) {
+				updateConnectionStatusMessage(PNPConstants.STATUS_LOG_FILE_ERROR);
+			}
+		}
+		try {
+			PrintStream pnpLog = new PrintStream(file);
+			System.setOut(pnpLog);
+			System.setErr(pnpLog);
+		} catch (FileNotFoundException e) {
+			updateConnectionStatusMessage(PNPConstants.STATUS_LOG_FILE_ERROR);
+		}
+
+	}
+
+	/**
 	 * Connect to USB device defined by Port selected in Connection Settings Panel 
 	 * @return true if connection was successful
 	 */
@@ -370,8 +407,8 @@ public class PNPMainController extends JPanel implements UsbEvent {
 		//we test that device is open, and if it is not we attempt to open
 		if(!usbDevice.isOpen()){
 			if(usbDevice.openPort()){
-				System.out.println("PNPMainController: -> connectUSB(): Port " + 
-						usbDevice.getPortName() + " opened with no error");
+				System.out.println("PNPMainController: connectUSB(): Port " + 
+						usbDevice.getPortName() + " opened with no error\n");
 				connectionSettingsController.connectionButtons.connectToDeviceButton.setText("Disconnect");
 				updateConnectionStatusMessage(PNPConstants.STATUS_CONNECTED);
 				connectionSettings.setConnected(true);
@@ -379,16 +416,16 @@ public class PNPMainController extends JPanel implements UsbEvent {
 				return true;
 			}
 			else{
-				System.out.println("PNPMainController: -> connectUSB(): Port " + 
-						usbDevice.getPortName() + " unable to open");
+				System.out.println("PNPMainController: connectUSB(): Port " + 
+						usbDevice.getPortName() + " unable to open\n");
 				updateConnectionStatusMessage(PNPConstants.STATUS_CONNECT_ERROR);
 				connectionSettings.setConnected(false);
 				return true;
 			}
 		}
 		else{
-			System.out.println("PNPMainController: -> connectUsb(): Usb device connected: " + 
-					usbDevice.getPortName());
+			System.out.println("PNPMainController: connectUsb(): Usb device connected: " + 
+					usbDevice.getPortName() + "\n");
 			connectionSettingsController.connectionButtons.connectToDeviceButton.setText("Disconnect");
 			updateConnectionStatusMessage(PNPConstants.STATUS_CONNECTED);
 			CTS = true;
@@ -405,7 +442,7 @@ public class PNPMainController extends JPanel implements UsbEvent {
 		if(usbDevice.isOpen()){
 			if(usbDevice.close()){
 				System.out.println("PNPMainController: -> disconnectUSB(): Port " + usbDevice.getPortName() +
-						" closed without error");
+						" closed without error\n");
 				connectionSettingsController.connectionButtons.connectToDeviceButton.setText("Connect To Device");
 				updateConnectionStatusMessage(PNPConstants.STATUS_DISCONNECTED);
 				CTS = false;
@@ -414,7 +451,7 @@ public class PNPMainController extends JPanel implements UsbEvent {
 			}
 			else{
 				System.out.println("PNPMainController: -> disconnectUSB(): Port " + usbDevice.getPortName() +
-						" was not able to be closed");
+						" was not able to be closed\n");
 				updateConnectionStatusMessage(PNPConstants.STATUS_DISCONNECT_ERROR);
 				connectionSettingsController.connectionButtons.connectToDeviceButton.setText("Connect To Device");
 				updateConnectionStatusMessage(PNPConstants.STATUS_DISCONNECTED);
@@ -424,12 +461,33 @@ public class PNPMainController extends JPanel implements UsbEvent {
 			}
 		}
 		System.out.println("PNPMainController: -> disconnectUSB(): Port " + usbDevice.getPortName() +
-				" was already closed, no changes made");
+				" was already closed, no changes made\n");
 		connectionSettingsController.connectionButtons.connectToDeviceButton.setText("Connect To Device");
 		updateConnectionStatusMessage(PNPConstants.STATUS_DISCONNECTED);
 		CTS = false;
 		connectionSettings.setConnected(false);
 		return false;
+	}
+
+	/**
+	 * Pause Job routine will pause or resume PNP job depending on current state of machine
+	 */
+	private void pauseJobRoutine(){
+		if(processingJob){
+			//if in PAUSED_STATE, resume processing
+			if(importGCodePanel.getJobState() == UploadGCodeController.PAUSED_STATE){
+				importGCodePanel.resumeJobButtonStates();
+				jobPaused = false;
+				processInstruction(currentInstructionIndex);
+			}
+			//else if in PROCESSING_STATE, pause machine
+			else if(importGCodePanel.getJobState() == UploadGCodeController.PROCESSING_STATE){
+				importGCodePanel.pauseJobButtonStates();
+				jobPaused = true;
+				int nextInstruction = currentInstructionIndex + 1;
+				importGCodePanel.updateJobStatus("Machine Paused. Next Line To Be Executed: " + nextInstruction);
+			}
+		}
 	}
 
 	/**
@@ -456,6 +514,13 @@ public class PNPMainController extends JPanel implements UsbEvent {
 			connectionSettingsController.setConnectionStatus("An error occurred while disconnecting from port: " +
 					usbDevice.getPortName());
 			break;
+		case PNPConstants.STATUS_LOG_FILE_ERROR:
+			connectionSettingsController.setConnectionStatus("An error occured while writing to PNP log file");
+			break;
+		case PNPConstants.STATUS_EMERGENCY_STOPPED:
+			connectionSettingsController.setConnectionStatus("Emergency stop button has disabled machine." +
+					"Job must be restarted.");
+			break;
 		default:
 			connectionSettingsController.setConnectionStatus("");
 		}
@@ -473,37 +538,57 @@ public class PNPMainController extends JPanel implements UsbEvent {
 			GCodeCommand command = new GCodeCommand(message, connectionSettings.getWidth(),
 					connectionSettings.getDepth(), connectionSettings.getHeight());
 			if(command.isValidCommand()){
+				//if computer vision command
 				if(command.isG56Command()){
 					zeroComponentOrientation();
 				}
+				//else update values for x y and z then send message
 				else if(updateValuesFromCommand(command)){
-					//if message sent successful
+					//if command contains a Z value or F value, do not append feed rate
+					if(command.iszMove() || command.isfCommand()){
+						message += "F" + command.getfValue();
+					}
+					//send message, if succeeds then update CTS and return true
 					if(usbDevice.writeMessage(message + "\n")){
 						updateManualControllerPositionValues();
-						System.out.println("PNPMainController -> sendMessage(String message): Message sent with out error " +
-								message);
+						System.out.println("PNPMainController: sendMessage(String message): Message sent with out error " +
+								message + "\n");
 						//CTS set to false, disabling UI from sending another command until a response is received
 						CTS = false;
 						return true;
 					}
+					//else transmission failed, restore previous values and report error
 					else{
-						System.out.println("PNPMainController: -> sendMessage(String message): Error Occurred, Message Not Sent");
+						System.out.println("PNPMainController: sendMessage(String message): Error Occurred, Message Not Sent\n");
 						restorePreviousValues();
 						return false;
 					}
 				}
 			}
 			else{
-				System.out.println("PNPMainController: -> sendMessage(String message): Invalid Command Found");
+				System.out.println("PNPMainController: sendMessage(String message): Invalid Command Found\n");
 				System.out.println(message);
 				restorePreviousValues();
 				CTS = true;
 				return false;
 			}
 		}
+		//Emergency stop button is often clicked when machine is in motion, therefore CTS will not be true
+		//Emergency stop routine must be handled separately
+		//Send emergency stop signal to PNP and update UI accordingly
+		else if(message.contentEquals(PNPConstants.EMERGENCY_STOP)){
+			usbDevice.writeMessage(PNPConstants.EMERGENCY_STOP);
+			CTS = false;
+			System.out.println("PNPMainController: sendMessage(String message): Emergency Stop Message Sent to PNP Machine");
+			updateConnectionStatusMessage(PNPConstants.STATUS_EMERGENCY_STOPPED);
+			manualController.updateErrorMessage("Emergency stop button has disabled PNP job.");
+			importGCodePanel.updateJobStatus("Emergency stop button has disabled PNP job.");
+			importGCodePanel.pauseJobButtonStates();
+			return true;
+		}
 		else{
-			System.out.println("PNPMainController: -> sendMessage(String message): Message not sent. " + 
-					"UsbDevice not initialized or CTS == FALSE");
+			System.out.println("PNPMainController: sendMessage(String message): Message not sent. " + 
+					"UsbDevice not initialized or CTS == FALSE\n");
 			CTS = false;
 			return false;
 		}
@@ -532,7 +617,7 @@ public class PNPMainController extends JPanel implements UsbEvent {
 		storeCurrentValues();
 		//G Move Commmands
 		if(command.isgCommand()){
-			//Home command resets X Y Z to 0
+			//Home command resets X Y to 0
 			if(command.getgValue() == 28){
 				currentX = 0;
 				currentY = 0;
@@ -543,8 +628,8 @@ public class PNPMainController extends JPanel implements UsbEvent {
 					currentX = command.getxValue();
 				}
 				else{
-					System.out.println("PNPMainController: -> updateValuesFromCommand(): Unable to send" +
-							"\nVerify X dimension is not out of bounds");
+					System.out.println("PNPMainController: updateValuesFromCommand(): Unable to send" +
+							"\nVerify X dimension is not out of bounds\n");
 					return false;
 				}
 			}
@@ -554,8 +639,8 @@ public class PNPMainController extends JPanel implements UsbEvent {
 					currentY = command.getyValue();
 				}
 				else{
-					System.out.println("PNPMainController:\nupdateValuesFromCommand(): Unable to send" +
-							"\nVerify Y dimension is not out of bounds");
+					System.out.println("PNPMainController: updateValuesFromCommand(): Unable to send" +
+							"\nVerify Y dimension is not out of bounds\n");
 					return false;
 				}
 			}
@@ -565,8 +650,8 @@ public class PNPMainController extends JPanel implements UsbEvent {
 					currentZ = command.getzValue();
 				}
 				else{
-					System.out.println("PNPMainController:\nupdateValuesFromCommand(): Unable to send" +
-							"\nVerify Z dimension is not out of bounds");
+					System.out.println("PNPMainController: updateValuesFromCommand(): Unable to send" +
+							"\nVerify Z dimension is not out of bounds\n");
 					return false;
 				}
 			}
@@ -578,20 +663,25 @@ public class PNPMainController extends JPanel implements UsbEvent {
 		//Feed Rate Commands
 		if(command.isfCommand()){
 			currentFeedRate = command.getfValue();
+		}			
+		//if command is G1 FXXX, save new feed rate to connection settings and update UI
+		if(command.isG1FCommand()){
+			connectionSettings.setFeedRate(command.getfValue());
+			connectionSettingsController.setFeedRate(command.getfValue());
 		}
 		//M Vacuum Commands
 		if(command.ismCommand()){
 			if(command.ismCommand()){
 				if(command.getmValue() == 10){
-					System.out.println("PNPMainController: -> updateValuesFromCommand(): Updating Vacuum State: VACUUM ON");
+					System.out.println("PNPMainController: updateValuesFromCommand(): Updating Vacuum State: VACUUM ON\n");
 					//vacuumOn = true;
 				}
 				else if(command.getmValue() == 11){
-					System.out.println("PNPMainController: -> updateValuesFromCommand(): Updating Vacuum State: VACUUM OFF");
+					System.out.println("PNPMainController: updateValuesFromCommand(): Updating Vacuum State: VACUUM OF\n");
 					//vacuumOn = false;
 				}
 				else{
-					System.out.println("PNPMainController: -> updateValuesFromCommand(): Invalid Value Detected for 'M'");
+					System.out.println("PNPMainController: updateValuesFromCommand(): Invalid Value Detected for 'M'\n");
 					return false;
 				}
 			}
@@ -617,7 +707,7 @@ public class PNPMainController extends JPanel implements UsbEvent {
 	 * Example) currentX = previousX
 	 */
 	private void restorePreviousValues(){
-		System.out.println("PNPMainController: -> restorePreviousValues(): transmission failed, restoring values");
+		System.out.println("PNPMainController: restorePreviousValues(): transmission failed, restoring previous values from memory\n");
 		currentX = previousX;
 		currentY = previousY;
 		currentZ = previousZ;
@@ -630,13 +720,14 @@ public class PNPMainController extends JPanel implements UsbEvent {
 	 * @return true if stop procedure was successful
 	 */
 	private boolean emergencyStop(){
+		// TODO we can not send this message through
 		if(sendMessage(PNPConstants.EMERGENCY_STOP)){
-			System.out.println("PNPMainController: -> emergencyStop(): PNP Machine Stopped");
+			System.out.println("PNPMainController: emergencyStop(): PNP Machine Stopped\n");
 			CTS = true;
 			return true;
 		}
 		else{
-			System.out.println("PNPMainController: -> emergencyStop(): unable to send emergency stop command");
+			System.out.println("PNPMainController: emergencyStop(): unable to send emergency stop command\n");
 			CTS = true;
 			return false;
 		}
@@ -654,7 +745,7 @@ public class PNPMainController extends JPanel implements UsbEvent {
 		connectionSettingsController.setPlatformHeight(connectionSettings.getHeight());
 		connectionSettingsController.setFeedRate(connectionSettings.getFeedRate());
 		connectionSettingsController.setBaudRate(connectionSettings.getBaudRate());
-		manualController.setStepSize(connectionSettings.getStepSize());
+		manualController.setStepSize(JogSizeSlider.SLIDER_5);
 	}
 
 	/**
@@ -711,14 +802,15 @@ public class PNPMainController extends JPanel implements UsbEvent {
 	 */
 	@Override
 	public void UsbReadEvent(String message) {
-		System.out.println("PNPMainController: PIC Return Value: " + message.replace("\n", ""));
+		System.out.println("PNPMainController: UsbReadEvent: PIC Return Value: " + message.replace("\n", "") + "\n");
 		PICReturnValue picReturnCommand = new PICReturnValue(message);
 		if(picReturnCommand.isValidPicReturn()){
 			if(picReturnCommand.isErrorMessage()){
-				System.out.println("PNPMainController: UsbReadEvent -> PIC Returned Error: " + picReturnCommand.getErrorType());
-				//TODO
-				//How do we handle an error message received from the PIC?
-				//TODO
+				System.out.println("PNPMainController: UsbReadEvent: PIC Returned Error: " + picReturnCommand.getErrorType());
+				importGCodePanel.updateJobStatus(picReturnCommand.getErrorType());
+				JDialog.setDefaultLookAndFeelDecorated(true);
+				JOptionPane.showMessageDialog(null, picReturnCommand.getErrorType(), "PIC Error Received", JOptionPane.INFORMATION_MESSAGE);
+				pauseJobRoutine();
 			}
 			else{
 				verifyUIPositionAgainstPICPosition(picReturnCommand);
@@ -732,12 +824,13 @@ public class PNPMainController extends JPanel implements UsbEvent {
 						importGCodePanel.gCodeConsoleView.highlightLine(currentInstructionIndex);
 					}
 					else if(jobPaused){
-						System.out.println("\nPNPMainController: JOB PAUSED");
+						System.out.println("\nPNPMainController: JOB PAUSED\n");
 					}
 					else{
-						System.out.println("\nPNPMainController: JOB COMPLETED WITHOUT ERROR");
+						System.out.println("\nPNPMainController: JOB COMPLETED WITHOUT ERROR\n");
 						processingJob = false;
 						importGCodePanel.stopJobButtonStates();
+						importGCodePanel.updateJobStatus("PNP Job Complete");
 						//JOB COMPLETE - ALLOW USER TO SAVE UPDATED PARTS FILE
 						displaySavePartFilesDialog();
 					}
@@ -765,8 +858,8 @@ public class PNPMainController extends JPanel implements UsbEvent {
 	 */
 	private boolean displaySavePartFilesDialog(){
 		JDialog.setDefaultLookAndFeelDecorated(true);
-		int response = JOptionPane.showConfirmDialog(null, "Click Yes To Store Updated Part Files. Select Yes If You" +
-				"Plan To Use Same Parts For Next Job", "Save Updated Parts File",
+		int response = JOptionPane.showConfirmDialog(null, "Click Yes To Store Updated Part Files.",
+				"Available Parts File Updated",
 				JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
 		//IF YES - SAVE UPDATEDPARTSFILE TO FILENAME SPECIFIED BY USER
 		if (response == JOptionPane.YES_OPTION) {
@@ -813,7 +906,7 @@ public class PNPMainController extends JPanel implements UsbEvent {
 			return true;
 		}
 		else{
-			System.out.println("PNPMainController: UsbReadEvent -> PNP App & PIC Coordinates Do Not Match");
+			System.out.println("PNPMainController: UsbReadEvent: PNP App & PIC Coordinates Do Not Match\n");
 			System.out.println("UI Values: X" + currentX + " Y" + currentY + " Z" + currentZ);
 			System.out.println("PIC Returned: " + picReturnCommand.getPicReturnValue());
 			System.out.println("Defaulting to PIC's values. Updating values now.");
@@ -850,12 +943,12 @@ public class PNPMainController extends JPanel implements UsbEvent {
 		}
 		importGCodePanel.updateJobStatus("Transmitting G Code at Line: " + currentInstructionIndex);
 		if(sendMessage(gCodeInstructions.get(currentInstructionIndex))){
-			System.out.println("\nPNPMainController -> processInstruction: Instruction at line " + 
-					currentInstructionIndex + " was processed without error");
+			System.out.println("PNPMainController -> processInstruction: Instruction at line " + 
+					currentInstructionIndex + " was processed without error\n");
 		}
 		else{
-			System.out.println("\nPNPMainController -> processInstruction: Instruction at line " + 
-					currentInstructionIndex + " received error message during transmission");
+			System.out.println("PNPMainController: processInstruction: Instruction at line " + 
+					currentInstructionIndex + " received error message during transmission\n");
 			importGCodePanel.updateJobStatus("Error Transmitting G Code at Line: " + currentInstructionIndex);
 		}
 	}
