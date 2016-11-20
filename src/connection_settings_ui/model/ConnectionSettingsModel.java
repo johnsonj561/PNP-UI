@@ -103,14 +103,14 @@ public class ConnectionSettingsModel {
 	 * Get step size for jog control
 	 * @param int stepSize
 	 */
-	public void setStepSize(int stepSize){
+	public void setStepSize(double stepSize){
 		this.stepSize = stepSize;
 	}
 	/**
 	 * Set step size for jog control
 	 * @return int stepsize
 	 */
-	public int getStepSize(){
+	public double getStepSize(){
 		return this.stepSize;
 	}
 	/**
@@ -174,7 +174,7 @@ public class ConnectionSettingsModel {
 	private int width;
 	private int depth;
 	private int height;
-	private int stepSize;
+	private double stepSize;
 	private boolean connected;
 	public static final int DEF_BAUD = 9600;
 	public static final int DEF_FEED_RATE = 1000;
