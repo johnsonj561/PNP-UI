@@ -81,7 +81,7 @@ public class ManualInstructionView extends JPanel{
 	private JPanel instructionHeadingPanel;
 	private JPanel instructionTextFieldPanel;
 	private JLabel sendInstructionLabel;
-	private JTextField instructionInput;
+	public JTextField instructionInput;
 	private String heading;
 	public JButton sendInstructionButton;
 }
