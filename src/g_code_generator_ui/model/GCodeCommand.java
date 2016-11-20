@@ -6,7 +6,7 @@ package g_code_generator_ui.model;
  * G1 = linear Move (X, Y, Z, R)
  * G4 = delay (P, R) = milliseconds, S = seconds)
  * G28 = home
- * G88 = light box
+ * G56 = light box
  * M10 = vacuum on, M11 = vacuum off
  * X = X coordinate (mm)
  * Y = Y coordinate (mm)
@@ -537,6 +537,17 @@ public class GCodeCommand {
 
 	public boolean isG56Command(){
 		if(gCommand && gValue == 56){
+			return true;
+		}
+		return false;
+	}
+	
+	/**
+	 * Returns true if G Code command is G1 FXXX format with no values for X, Y, Z, or R
+	 * @return true if command sets feed rate only
+	 */
+	public boolean isG1FCommand(){
+		if(fCommand && !(xMove || yMove || zMove || rMove)){
 			return true;
 		}
 		return false;
