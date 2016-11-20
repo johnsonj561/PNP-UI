@@ -13,6 +13,8 @@ public class PNPConstants {
 	public static final int STATUS_CONNECT_ERROR = 3;
 	public static final int STATUS_DISCONNECT_ERROR = 4;
 	public static final int STATUS_SEND_ERROR = 5;
+	public static final int STATUS_LOG_FILE_ERROR = 6;
+	public static final int STATUS_EMERGENCY_STOPPED =7;
 	//commands
 	public static final String HOME_X = "G1 X0";
 	public static final String HOME_Y = "G1 Y0";
