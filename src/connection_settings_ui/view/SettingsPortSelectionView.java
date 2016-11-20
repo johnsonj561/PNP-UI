@@ -52,11 +52,14 @@ public class SettingsPortSelectionView extends JPanel{
 		comboBoxPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		comboBoxPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 5));
 		//get list of current available ports and add them to JComboBox
-		portOptionsDropDown = new JComboBox<String>(UsbDevice.findSerialPorts());
+		String[] serialPorts = UsbDevice.findSerialPorts();
+		portOptionsDropDown = new JComboBox<String>(serialPorts);
+		if(portOptionsDropDown.getItemCount() > 0){
+				portOptionsDropDown.setSelectedIndex(0);
+		}
 		portOptionsDropDown.setPreferredSize(new Dimension(COMBO_BOX_WIDTH, portOptionsDropDown.getPreferredSize().height));
 		portOptionsDropDown.setMaximumSize(new Dimension(COMBO_BOX_WIDTH, portOptionsDropDown.getPreferredSize().height));
 		portOptionsDropDown.setMinimumSize(new Dimension(COMBO_BOX_WIDTH, portOptionsDropDown.getPreferredSize().height));
-		portOptionsDropDown.setSelectedIndex(0);
 		comboBoxPanel.add(portOptionsDropDown);
 		//refresh ports button Panel
 		refreshButtonPanel = new JPanel();
@@ -108,7 +111,7 @@ public class SettingsPortSelectionView extends JPanel{
 		}
 
 	}
-	
+
 	/**
 	 * Default serial UID
 	 */
