@@ -75,7 +75,7 @@ public class ManualController extends JPanel{
 	 * Get step size defined by user
 	 * @return int step size
 	 */
-	public int getStepSize(){
+	public double getStepSize(){
 		return jogSizeSliderView.getStepSizeValue();
 	}
 
