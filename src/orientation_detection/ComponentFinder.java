@@ -12,7 +12,7 @@ public class ComponentFinder {
 	 * Python OpenCV script captures image of component and calculates orientation
 	 */
 	public ComponentFinder(){
-		processBuilder = new ProcessBuilder("python", "main.py", "-i", "test12.jpg");
+		processBuilder = new ProcessBuilder("python", "PrintComponentOrientation.py");
 		processBuilder.directory(new File("C:\\java\\PnPWorkspace\\PnPMachine\\src\\orientation_detection\\"));
 		processBuilder.redirectErrorStream(true);
 		xCenter = -1;
@@ -43,9 +43,15 @@ public class ComponentFinder {
 	 */
 	private void parseScriptOutput(String output){
 		String[] returnValues = output.split("[ ,]+");
-		xCenter = Double.parseDouble(returnValues[0].replace("X", ""));
-		yCenter = Double.parseDouble(returnValues[1].replace("Y", ""));
-		orientation = Double.parseDouble(returnValues[2]);
+		if(returnValues.length == 3){
+			xCenter = Double.parseDouble(returnValues[0].replace("X", ""));
+			yCenter = Double.parseDouble(returnValues[1].replace("Y", ""));
+			orientation = Double.parseDouble(returnValues[2]);
+		}
+		//else no components were found
+		//TODO handle no component found error
+		//take another image, or home and get new part
+		
 	}
 	
 	/**
