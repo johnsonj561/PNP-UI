@@ -45,8 +45,7 @@ import jssc_usb.UsbEvent;
  * 3) Upload To PNP - parses file of G Code Instructions and sends to PNP's embedded system
  * 4) Manual Control - manually control PNP Machine through Jog controls and Single Line Entry point
  * 5) Create Parts File - create parts file that specifies available parts and their position on placement platform
- * @author Justin Johnson
- *
+ * @author Justin Johnson 
  */
 public class PNPMainController extends JPanel implements UsbEvent {
 
@@ -67,6 +66,7 @@ public class PNPMainController extends JPanel implements UsbEvent {
 		CTS = false;
 		//processingJob set to true only when uploading project file to PNP
 		processingJob = false;
+		vacuumOn = false;
 		//initialize all views
 		initUI();
 		//initialize buttons
@@ -204,6 +204,35 @@ public class PNPMainController extends JPanel implements UsbEvent {
 						jogZMinus();
 					}
 				});	
+		//Rotate vacuum head CW
+		manualController.jogButtonView.spindleCWButton.addActionListener(
+				new ActionListener() {
+					@Override
+					public void actionPerformed(ActionEvent e) {
+						spindleCW();
+					}
+				});
+		//Rotate vacuum head CCW
+		manualController.jogButtonView.spindleCCWButton.addActionListener(
+				new ActionListener() {
+					@Override
+					public void actionPerformed(ActionEvent e) {
+						spindleCCW();
+					}
+				});
+		//Toggle vacuum on/off
+		manualController.jogButtonView.vacuumButton.addActionListener(
+				new ActionListener() {
+					@Override
+					public void actionPerformed(ActionEvent e) {
+						if(vacuumOn){
+							toggleVacuum(false);
+						}
+						else{
+							toggleVacuum(true);
+						}
+					}
+				});
 		//manual send line to machine
 		manualController.manualInstructionView.sendInstructionButton.addActionListener(
 				new ActionListener() {
@@ -293,6 +322,7 @@ public class PNPMainController extends JPanel implements UsbEvent {
 					@Override
 					public void actionPerformed(ActionEvent e) {
 						importGCodePanel.stopJobButtonStates();
+						processingJob = false;
 					}
 				});
 		//handle validate job button so that it traverses g code and checks for errors
@@ -430,6 +460,7 @@ public class PNPMainController extends JPanel implements UsbEvent {
 			updateConnectionStatusMessage(PNPConstants.STATUS_CONNECTED);
 			CTS = true;
 			connectionSettings.setConnected(true);
+			toggleVacuum(false);
 			return true;
 		}
 	}
@@ -797,6 +828,37 @@ public class PNPMainController extends JPanel implements UsbEvent {
 	}
 
 	/**
+	 * Rotate vacuum nozzle in CW direction
+	 */
+	private void spindleCW(){
+		double spindlePosition = currentR + manualController.getStepSize();
+		sendMessage("G1 R" + spindlePosition);
+	}
+
+	/**
+	 * Rotate vacuum nozzle in CCW direction
+	 */
+	private void spindleCCW(){
+		double spindlePosition = currentR - manualController.getStepSize();
+		sendMessage("G1 R" + spindlePosition);
+	}
+
+	/**
+	 * Toggle vacuum on/off
+	 * @param boolean turnOn
+	 */
+	private void toggleVacuum(boolean turnOn){
+		if(turnOn){
+			vacuumOn = true;
+			sendMessage("M10");
+		}
+		else{
+			vacuumOn = false;
+			sendMessage("M11");
+		}
+	}
+
+	/**
 	 * Handle read events from UsbDevice
 	 * Verify if PIC return value matches Applications current values for X Y Z
 	 */
@@ -994,6 +1056,7 @@ public class PNPMainController extends JPanel implements UsbEvent {
 	private double currentZ;
 	private double currentR;
 	private int currentFeedRate;
+	private boolean vacuumOn;
 	//previous coordinates of PNP machine head
 	//used to restore values after failed transmission
 	private double previousX;
