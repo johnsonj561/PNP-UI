@@ -29,7 +29,7 @@ def main():
   # mComponentTracker.sharpenImage()
   
   # Threshold image and create binary image
-  mComponentTracker.thresholdImage(lowThreshold, highThreshold)
+  mComponentTracker.thresholdImage(lowThreshold, highThreshold, True)
   
   # Detect contour rectangle that is >= minCompnentArea, neglecting insignificantly small contours
   rectangle = mComponentTracker.findContourRectangle(minComponentArea)
@@ -43,13 +43,12 @@ def main():
     # We could try to sharpen image a 2nd time and check for a component
     # During testing, re-sharpening image has proven effective
     print("Null")
-
-    
+  
 # Capture image from USB Camera and display to user
 def captureImage():
     cam = cv2.VideoCapture(0)
     s, img = cam.read() 
-    cv2.imshow("Test Picture", img)
+    
     filename = time.strftime("%Y%m%d-%H%M%S") + ".jpg"
     cv2.imwrite(filename,img) 
     return filename

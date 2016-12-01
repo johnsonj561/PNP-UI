@@ -20,9 +20,11 @@ public class EagleSMTComponent extends SMTComponent{
 			description = attributes[0];
 			xCoordinate = attributes[1];
 			yCoordinate = attributes[2];
+			double dXCoordinate = (double)Math.round((Double.parseDouble(xCoordinate) * 1000d) / 1000d);
+			double dYCoordinate = (double)Math.round((Double.parseDouble(yCoordinate) * 1000d) / 1000d);
 			//add PCB's offset values to the x/y coordinates then convert back to String
-			xCoordinate = Double.parseDouble(xCoordinate) + PCB_X_OFFSET + "";
-			yCoordinate = Double.parseDouble(yCoordinate) + PCB_Y_OFFSET + "";
+			xCoordinate = dXCoordinate + PCB_X_OFFSET + "";
+			yCoordinate = dYCoordinate + PCB_Y_OFFSET + "";
 			rotation = attributes[3];
 			value = attributes[4];
 			packageType = attributes[5];

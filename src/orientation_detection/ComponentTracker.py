@@ -11,6 +11,9 @@ class ComponentTracker():
   # Read input image path to be processed
   def __init__(self, input_image):
     self.input_image = cv2.imread(input_image)
+    
+    self.IMAGE_WIDTH = 640
+    self.IMAGE_HEIGHT = 480
   
   # Threshold image and generate binary output image
   # @param int l = lower bound of threshold
@@ -22,6 +25,7 @@ class ComponentTracker():
     # Another option: convert img to gray scale and threshold on 1 channel
     lower = np.array([l, l, l])
     upper = np.array([h, h, h])
+    
     # inRange returns binary value 1/0:
     # Returns 1 if lower <= input <= upper, else returns 0
     self.binary_image = cv2.inRange(self.input_image, lower, upper)
@@ -106,6 +110,8 @@ class ComponentTracker():
     # rect[0] contains center of rectangle position
     # Get position, format to 3 decimal, cast to String
     centerX, centerY = rect[0]
+    centerX = centerX - (self.IMAGE_WIDTH/2)
+    centerY = centerY - (self.IMAGE_HEIGHT/2)
     centerX = str(format(centerX, '.3f'))
     centerY = str(format(centerY, '.3f'))
     # rect[1] contains dimensions
@@ -126,6 +132,8 @@ class ComponentTracker():
   # Return string that contains component's center coordinates (x,y) and it's angle of rotation
   def getRectangleDetails(self, rect):
     centerX, centerY = rect[0]
+    centerX = centerX - (self.IMAGE_WIDTH/2)
+    centerY = centerY - (self.IMAGE_HEIGHT/2)
     orientationDetails = "X" + str(format(centerX, '.3f')) + ", Y" + str(format(centerY, '.3f')) + ", "
     angle = self.normalizeRectangle(rect[2])
     orientationDetails += str(format(angle, '.3f'))
