@@ -13,8 +13,10 @@ public class XYCoordinate {
 	 * @param double y
 	 */
 	public XYCoordinate(double x, double y) {
-		xCoordinate = x;
-		yCoordinate = y;
+		xCoordinate = (double)Math.round(x * 100d) / 100d;
+		yCoordinate = (double)Math.round(y * 100d) / 100d;
+	//	xCoordinate = x;
+	//	yCoordinate = y;
 	}
 	
 	/**
