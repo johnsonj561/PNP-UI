@@ -45,7 +45,7 @@ public class GCodeCommand {
 		//A 'G' or 'M' followed by 1 or more digits, then 1 or more spaces, followed by 0 or 1 of 
 		//X, Y, Z, R, F, P, S, each of which is separated by 0 or more spaces
 		String gCodeRegex = "^[G,M]{1}\\d+\\s*(X[+]?\\d+(\\.\\d+)?)?\\s*(Y[+]?\\d+(\\.\\d+)?)?\\s*" +
-				"(Z[+]?\\d+(\\.\\d+)?)?\\s*(R[+]?\\d+(\\.\\d+)?)?\\s*(P[+]?\\d+(\\.\\d+)?)?\\s*" +
+				"(Z[+]?\\d+(\\.\\d+)?)?\\s*(R[+]?[-]?\\d+(\\.\\d+)?)?\\s*(P[+]?\\d+(\\.\\d+)?)?\\s*" +
 				"(S[+]?\\d+(\\.\\d+)?)?\\s*(F[+]?\\d+)?\\s*$";
 		//if it matches expected G Code Command Format
 		if(gCodeString.matches(gCodeRegex)){
@@ -311,7 +311,7 @@ public class GCodeCommand {
 		//R value expects digits and optional decimal
 		case 'R':
 			temp = token.replace("R", "");
-			if(temp.matches("^[+]?\\d+(\\.\\d+)?$")){
+			if(temp.matches("^[-]?[+]?\\d+(\\.\\d+)?$")){
 				rValue = Double.parseDouble(temp);
 				rMove = true;
 			}
