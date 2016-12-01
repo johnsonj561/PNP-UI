@@ -67,7 +67,7 @@ public class GCodeGenerator {
 	 */
 	public String initializeGCode(){
 		String gCode = ";G21; Set units to millimeters\n;G90; Set absolute coordinates\nG1 Z4;lift head\nG28; Home x and y axis\n";
-		gCode += "G1 F3000; Set feed rate (speed) for first move\n\n";
+		gCode += "G1 F1000; Set feed rate (speed) for first move\n\n";
 		return gCode;
 	}
 
@@ -80,7 +80,6 @@ public class GCodeGenerator {
 		if(inputFileType == EAGLE_CENTROID_FILE){
 			for(int i = 0; i < eagleInputComponents.length; i++){
 				gCode += moveToPart(eagleInputComponents[i]);
-				gCode += rotateHead(eagleInputComponents[i].getRotation());
 				gCode += pickUpComponent();
 				gCode += rotateHead("0.00");
 				//if alignment through CV is required, move to light box
@@ -90,13 +89,14 @@ public class GCodeGenerator {
 					gCode += "G56\n";
 				}
 				gCode += moveToLocation(eagleInputComponents[i].getxCoordinate(), eagleInputComponents[i].getyCoordinate());
-				gCode += lowerComponent() + "\n";
+				gCode += rotateHead(eagleInputComponents[i].getRotation());
+				gCode += lowerComponent();
+				gCode += rotateHead("0.00") + "\n";
 			}
 		}
 		else if(inputFileType == ALTIUM_CENTROID_FILE){
 			for(int i = 0; i < altiumInputComponents.length; i++){
 				gCode += moveToPart(altiumInputComponents[i]);
-				gCode += rotateHead(altiumInputComponents[i].getRotation());
 				gCode += pickUpComponent();
 				gCode += rotateHead("0.0");
 				//if alignment through CV is required, move to light box
@@ -106,6 +106,8 @@ public class GCodeGenerator {
 					gCode += "G56\n";
 				}
 				gCode += moveToLocation(altiumInputComponents[i].getxCoordinate(), altiumInputComponents[i].getyCoordinate());
+				// Need altium file's angle of rotation
+				// TODO
 				gCode += lowerComponent() + "\n";
 			}
 		}
@@ -123,7 +125,7 @@ public class GCodeGenerator {
 	 * @return String gCode instruction to rotate head
 	 */
 	private String rotateHead(String theta){
-		return ";G1 R" + theta + ";rotating head to match angle of part\n";
+		return "G1 R" + theta + ";rotating head to match angle of part\n";
 	}
 	
 	/**
@@ -144,7 +146,8 @@ public class GCodeGenerator {
 						return "G1 Z4 F300;lift head before moving" +
 								"\nG1 X" + coordinates.getxCoordinate() + 
 								" Y" + coordinates.getyCoordinate() + 
-								" F8000\t;moving head to next part\n";
+								" F1000;moving head to next part\n" +
+								"G1 R" + part.getTheta() + ";Rotating to angle of part\n";
 					}
 				}
 			}
@@ -168,7 +171,8 @@ public class GCodeGenerator {
 						return "G1 Z4 F300;lift head before moving" +
 								"\nG1 X" + coordinates.getxCoordinate() + 
 								" Y" + coordinates.getyCoordinate() + 
-								" F8000\t;moving head to next part\n";
+								" F1000\t;moving head to next part\n" +
+								"G1 R" + part.getTheta() + ";Rotating to angle of part\n";
 					}
 				}
 			}
@@ -196,7 +200,7 @@ public class GCodeGenerator {
 	private String pickUpComponent(){
 		return "G1 Z0 F300;Lower head to component" +
 				"\nM10; Vacuum On" +
-				"\nG4 P2000;delay" +
+				"\nG4 P5000;delay" +
 				"\nG1 Z4 F300;Lift head off table\n";
 	}
 
@@ -207,7 +211,7 @@ public class GCodeGenerator {
 	private String lowerComponent(){
 		return "G1 Z0 F300;Lower head to PCB board" +
 				"\nM11; Vacuum Off" +
-				"\nG4 P2000;delay" +
+				"\nG4 P5000;delay" +
 				"\nG1 Z4 F300;Lift head off PCB board\n";
 	}
 
