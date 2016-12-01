@@ -28,6 +28,7 @@ public class Part {
 		nextAvailablePart = count-1;
 		//calculate angle of part
 		theta = calculateRotation();
+		theta = (double)Math.round(theta * 100d) / 100d;
 		printCoordinates();
 	}
 
@@ -38,13 +39,20 @@ public class Part {
 	public void updatePartCount(){
 		//nextAvailablePart was set to count -1 and decremented as components were used
 		//we update the count to = the ith part
-		count = nextAvailablePart + 1;
-		xFinal = xyCoordinates[nextAvailablePart].getxCoordinate();
-		yFinal = xyCoordinates[nextAvailablePart].getyCoordinate();
-		validPartLocations = calculatePartCoordinates();
-		theta = calculateRotation();
-		System.out.println("Part -> updatePartCount() complete. Printing coordinates of new parts:");
-		printCoordinates();
+		if(nextAvailablePart < 0){
+			//TODO
+			//Notify User that there are no more parts left!
+		}
+		else{
+			count = nextAvailablePart + 1;
+			xFinal = xyCoordinates[nextAvailablePart].getxCoordinate();
+			yFinal = xyCoordinates[nextAvailablePart].getyCoordinate();
+			validPartLocations = calculatePartCoordinates();
+			theta = calculateRotation();
+			System.out.println("Part -> updatePartCount() complete. Printing coordinates of new parts:");
+			printCoordinates();
+		}
+		
 	}
 
 
@@ -365,6 +373,7 @@ public class Part {
 	private double yFinal;
 	private int count;
 	private double theta;
+	private double rotation;
 	//comma separated String of part features
 	private String partFeatureString;
 	//array of coordinates that will store coordinate of each component on this part tape
