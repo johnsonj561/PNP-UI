@@ -61,6 +61,14 @@ public class JogButtonView extends JPanel{
 		spindlePanel.setMinimumSize(new Dimension(50,185));
 		spindlePanel.setMaximumSize(new Dimension(50,185));
 		spindlePanel.setPreferredSize(new Dimension(50,185));
+		
+		//create a 3x1 grid to display vacuum on/off and Vision on/off buttons
+		vacuumAndVisionPanel = new JPanel();
+		vacuumAndVisionPanel.setLayout(new GridLayout(3, 1, 10, 10));
+		vacuumAndVisionPanel.setMinimumSize(new Dimension(50,185));
+		vacuumAndVisionPanel.setMaximumSize(new Dimension(50,185));
+		vacuumAndVisionPanel.setPreferredSize(new Dimension(50,185));
+		
 
 		//create BoxLayout panel to display emergency stop button
 		emergencyStopPanel = new EmergencyStopView();
@@ -75,6 +83,8 @@ public class JogButtonView extends JPanel{
 		jogYPlusButton = new JButton(new ImageIcon(jogYPlusImage));
 		spindleCWButton = new JButton(new ImageIcon(spindleCWImage));
 		spindleCCWButton = new JButton(new ImageIcon(spindleCCWImage));
+		vacuumButton = new JButton(new ImageIcon(vacuumImage));
+		visionButton = new JButton(new ImageIcon(visionImage));
 
 		//add elements to this layout
 		this.setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
@@ -84,7 +94,9 @@ public class JogButtonView extends JPanel{
 		this.add(jogZPanel);
 		this.add(Box.createRigidArea(new Dimension(30, 0)));
 		this.add(spindlePanel);
-		this.add(Box.createRigidArea(new Dimension(100, 0)));
+		this.add(Box.createRigidArea(new Dimension(30, 0)));
+		this.add(vacuumAndVisionPanel);
+		this.add(Box.createRigidArea(new Dimension(50, 0)));
 		this.add(emergencyStopPanel);
 	}
 
@@ -107,6 +119,9 @@ public class JogButtonView extends JPanel{
 		spindlePanel.add(spindleCWButton);
 		spindlePanel.add(new JLabel());
 		spindlePanel.add(spindleCCWButton);
+		vacuumAndVisionPanel.add(vacuumButton);
+		vacuumAndVisionPanel.add(new JLabel());
+		vacuumAndVisionPanel.add(visionButton);
 	}
 
 	/**
@@ -122,6 +137,8 @@ public class JogButtonView extends JPanel{
 		jogZPlusImage = ImageIO.read(getClass().getResource("/images/jogZPlus-40x20.png"));
 		spindleCWImage = ImageIO.read(getClass().getResource("/images/spindleCW-20x20.png"));
 		spindleCCWImage = ImageIO.read(getClass().getResource("/images/spindleCCW-20x20.png"));
+		vacuumImage = ImageIO.read(getClass().getResource("/images/vacuum-30x30.png"));
+		visionImage = ImageIO.read(getClass().getResource("/images/eye-30x30.png"));
 	}
 
 	/**
@@ -135,6 +152,7 @@ public class JogButtonView extends JPanel{
 	private JPanel jogXYPanel;
 	private JPanel jogZPanel;
 	private JPanel spindlePanel;
+	private JPanel vacuumAndVisionPanel;
 	public JButton jogXMinusButton;
 	public JButton jogXPlusButton;
 	public JButton jogYMinusButton;
@@ -143,6 +161,8 @@ public class JogButtonView extends JPanel{
 	public JButton spindleCCWButton;
 	public JButton jogZMinusButton;
 	public JButton jogZPlusButton;
+	public JButton vacuumButton;
+	public JButton visionButton;
 	private Image jogXMinusImage;
 	private Image jogXPlusImage;
 	private Image jogYMinusImage;
@@ -151,5 +171,7 @@ public class JogButtonView extends JPanel{
 	private Image jogZPlusImage;
 	private Image spindleCWImage;
 	private Image spindleCCWImage;
+	private Image vacuumImage;
+	private Image visionImage;
 	public EmergencyStopView emergencyStopPanel;
 }
