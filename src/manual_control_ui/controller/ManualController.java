@@ -56,7 +56,6 @@ public class ManualController extends JPanel{
 		manualInstructionView = new ManualInstructionView("Enter G-Code Command: ");
 		manualInstructionView.setAlignmentX(JPanel.LEFT_ALIGNMENT);
 
-
 		//Add individual components to this.JPanel for final display, laid vertically along y Axis
 		this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		this.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));
