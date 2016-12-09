@@ -39,7 +39,7 @@ public class SettingsInputTextView extends JPanel{
 		inputLabelPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		inputLabelPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 5));
 		inputLabel = new JLabel(label);
-		//Consider setting minimum size to force alignment!
+		//Consider setting minimum size to force alignment
 		//inputLabel.setSize(new Dimension(500, inputLabel.getPreferredSize().height));
 		inputLabel.setMinimumSize(new Dimension(LABEL_WIDTH, inputLabel.getPreferredSize().height));
 		inputLabel.setPreferredSize(new Dimension(LABEL_WIDTH, inputLabel.getPreferredSize().height));
