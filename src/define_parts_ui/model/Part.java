@@ -373,7 +373,6 @@ public class Part {
 	private double yFinal;
 	private int count;
 	private double theta;
-	private double rotation;
 	//comma separated String of part features
 	private String partFeatureString;
 	//array of coordinates that will store coordinate of each component on this part tape
