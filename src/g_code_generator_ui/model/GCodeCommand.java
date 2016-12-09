@@ -119,10 +119,17 @@ public class GCodeCommand {
 					return false;
 				}
 			}
-			//if G28 or G56 command, there should be no values for X Y Z R or F
-			if(gValue == 28 || gValue == 56){
+			//if G56 command, there should be no values for X Y Z R or F
+			if(gValue == 56){
 				if(xMove || yMove || zMove || rMove || fCommand){
 					System.out.println("G28 can not have a value for X Y Z R F");
+					return false;
+				}
+			}
+			//if G28 command, there should be no values for Z R or F
+			if(gValue == 28){
+				if(zMove || rMove || fCommand){
+					System.out.println("G28 can not have a value for Z R F");
 					return false;
 				}
 			}
@@ -221,7 +228,7 @@ public class GCodeCommand {
 		case 'G':
 			//remove the G check that value for G is valid then assign to gValue
 			temp = token.replace("G", "");
-			//\\d{1,2} checks for 1 or 2 digits, covers cases G1, G4, G28
+			//\\d{1,2} checks for 1 or 2 digits, covers cases G1, G4, G28, G56
 			if(temp.matches("^\\d{1,2}$")){
 				gValue = Integer.parseInt(temp);
 				if(gValue == 1 || gValue == 4 || gValue == 28 || gValue == 56){
@@ -256,8 +263,15 @@ public class GCodeCommand {
 				isValidCommand = false;
 			}
 			break;
-		//X value expects digits and optional decimal
+		//X value expects digits and optional decimal, unless G28 command, then just X is accepted
 		case 'X':
+			temp = token.replace("X", "");
+			//if G28 command we expect 1 X with no digits
+			if(gValue == 28 && token.matches("^[Xx]{1}$")){
+				System.out.println("G28 X command identified");
+				xMove = true;
+				xValue = 0;
+			}
 			//regex = 0 or 1 '+' signs, 1 or more digits,
 			//^ is beginning of string
 			// [+]? is 0 or 1 plus symbol
@@ -265,8 +279,7 @@ public class GCodeCommand {
 			//(\\.\\d+)? is 0 or 1 of the substrings found within parenthesis
 			//\\.\\d+ is a decimal point followed by 1 or more digits
 			//$ is end of line
-			temp = token.replace("X", "");
-			if(temp.matches("^[+]?\\d+(\\.\\d+)?$")){
+			else if(temp.matches("^[+]?\\d+(\\.\\d+)?$")){
 				xValue = Double.parseDouble(temp);
 				xMove = true;
 				if(xValue < 0 || xValue > maxWidth){
@@ -281,7 +294,13 @@ public class GCodeCommand {
 		//Y value expects digits and optional decimal
 		case 'Y':
 			temp = token.replace("Y", "");
-			if(temp.matches("^[+]?\\d+(\\.\\d+)?$")){
+			//if G28 command we expect 1 X with no digits
+			if(gValue == 28 && token.matches("^[Yy]{1}$")){
+				System.out.println("G28 Y command identified");
+				yMove = true;
+				yValue = 0;
+			}
+			else if(temp.matches("^[+]?\\d+(\\.\\d+)?$")){
 				yValue = Double.parseDouble(temp);
 				yMove = true;
 				if(yValue < 0 || yValue > maxDepth){
