@@ -14,6 +14,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import orientation_detection.ComponentFinder;
 import pnp_main.model.PNPConstants;
+import view_vision_ui.controller.ViewVisionController;
 import manual_control_ui.controller.ManualController;
 import manual_control_ui.view.JogSizeSlider;
 import connection_settings_ui.controller.ConnectionSettingsController;
@@ -91,8 +92,15 @@ public class PNPMainController extends JPanel implements UsbEvent {
 			System.out.println("PNPMainController: Error creating tabbed interface (ConnectionSettingsController)\n");
 			e.printStackTrace();
 		}
+		//Connection Settings
 		tabbedPane.addTab("Connect Settings", null, connectionSettingsController, 
 				"Configure connection settings and connect to a PNP device");
+		//Manual PNP Control
+		manualController = new ManualController();
+		tabbedPane.addTab("Manual PNP Control", null, manualController, "Manual PNP Control");
+		//Define Parts Specifications
+		definePartsController = new DefinePartsController();
+		tabbedPane.addTab("Define Project Parts", null, definePartsController, "Define Footprints, Values, and Positioning");
 		//G Code Generation
 		gCodeGeneratorPanel = new GCodeGeneratorController();
 		tabbedPane.addTab("Generate G Code", null, gCodeGeneratorPanel, 
@@ -101,12 +109,10 @@ public class PNPMainController extends JPanel implements UsbEvent {
 		importGCodePanel = new UploadGCodeController();
 		tabbedPane.addTab("Upload To PNP", null, importGCodePanel, 
 				"Upload entire projects to PNP machine for processing");
-		//Manual PNP Control
-		manualController = new ManualController();
-		tabbedPane.addTab("Manual PNP Control", null, manualController, "Manual PNP Control");
-		//Create Parts Specifications
-		definePartsController = new DefinePartsController();
-		tabbedPane.addTab("Define Project Parts", null, definePartsController, "Define Footprints, Values, and Positioning");
+		//Vision Viewer
+		viewVisionConroller = new ViewVisionController();
+		tabbedPane.addTab("Computer Vision", null, viewVisionConroller,
+				"View Computer Vision Processes Real Time");
 		//add tabs to JPanel
 		add(tabbedPane);
 	}
@@ -269,14 +275,6 @@ public class PNPMainController extends JPanel implements UsbEvent {
 					@Override
 					public void actionPerformed(ActionEvent e) {
 						sendMessage(PNPConstants.HOME_Y);
-					}
-				});
-		//home z moves PNP to defined home on Z
-		manualController.homeButtonView.homeZButton.addActionListener(
-				new ActionListener() {
-					@Override
-					public void actionPerformed(ActionEvent e) {
-						sendMessage(PNPConstants.HOME_Z);
 					}
 				});
 		//connection page emergency stop button
@@ -751,8 +749,8 @@ public class PNPMainController extends JPanel implements UsbEvent {
 	 * @return true if stop procedure was successful
 	 */
 	private boolean emergencyStop(){
-		// TODO we can not send this message through
-		if(sendMessage(PNPConstants.EMERGENCY_STOP)){
+		// TODO we can not send this message through because machine is currently running
+		if(/*sendMessage(PNPConstants.EMERGENCY_STOP*/usbDevice.writeMessage(PNPConstants.EMERGENCY_STOP)){
 			System.out.println("PNPMainController: emergencyStop(): PNP Machine Stopped\n");
 			CTS = true;
 			return true;
@@ -1044,6 +1042,7 @@ public class PNPMainController extends JPanel implements UsbEvent {
 	private UploadGCodeController importGCodePanel;
 	private ManualController manualController;
 	private DefinePartsController definePartsController;
+	private ViewVisionController viewVisionConroller;
 	//UsbDevice for communicating to PIC
 	private UsbDevice usbDevice;
 	//Model for storing/manipulating connection settings
