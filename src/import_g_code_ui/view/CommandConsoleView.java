@@ -47,14 +47,20 @@ public class CommandConsoleView extends JPanel{
 		//use flow layout and align buttons to right
 		buttonsPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		buttonsPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));
-		//save button functionality
+		//launch vision viewer button
+		//viewVisionButton = new JButton("View Vision");
+		//viewVisionButton.setPreferredSize(new Dimension(WIDE_BUTTON, viewVisionButton.getPreferredSize().height));
+		//start button
 		startJobButton = new JButton("Start Job");
+		startJobButton.setPreferredSize(new Dimension(WIDE_BUTTON, startJobButton.getPreferredSize().height));
 		startJobButton.setEnabled(false);
 		//pause current job
 		pauseJobButton = new JButton("Pause");
+		pauseJobButton.setPreferredSize(new Dimension(WIDE_BUTTON, pauseJobButton.getPreferredSize().height));
 		pauseJobButton.setEnabled(false);
 		//clear button functionality
 		stopJobButton = new JButton("Terminate");
+		stopJobButton.setPreferredSize(new Dimension(WIDE_BUTTON, stopJobButton.getPreferredSize().height));
 		stopJobButton.setForeground(Color.RED);
 		stopJobButton.setFont(new Font("Verdana", Font.BOLD, 13));
 		stopJobButton.setEnabled(false);
@@ -64,6 +70,8 @@ public class CommandConsoleView extends JPanel{
 		buttonsPanel.add(pauseJobButton);
 		buttonsPanel.add(Box.createRigidArea(new Dimension(15, 0)));
 		buttonsPanel.add(stopJobButton);
+	//	buttonsPanel.add(Box.createRigidArea(new Dimension(15, 0)));
+	//	buttonsPanel.add(viewVisionButton);
 		//components of GCodeEditorPanel will be laid out along Y Axis
 		this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		//add components to this.JPanel
@@ -152,10 +160,12 @@ public class CommandConsoleView extends JPanel{
 	private JScrollPane scrollPane;
 	private JPanel buttonsPanel;
 	public JTextArea gCodeTextArea;
+	public JButton viewVisionButton;
 	public JButton startJobButton;
 	public JButton pauseJobButton;
 	public JButton stopJobButton;
-
+	private final int WIDE_BUTTON = 110;
+	
 
 
 
