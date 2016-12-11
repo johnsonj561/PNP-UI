@@ -42,7 +42,6 @@ public class ManageConnectionButtonsView extends JPanel{
 		buttonsPanel.add(restoreDefaultsButton);
 		buttonsPanel.add(Box.createRigidArea(new Dimension(15, 0)));
 		buttonsPanel.add(connectToDeviceButton);
-	
 		//description panel to display connection status
 		connectionStatusPanel = new JPanel();
 		connectionStatusPanel.setLayout(new BoxLayout(connectionStatusPanel, BoxLayout.X_AXIS));
@@ -51,12 +50,10 @@ public class ManageConnectionButtonsView extends JPanel{
 		connectionStatusLabel = new JLabel(status);
 		connectionStatusLabel.setFont(new Font("Verdana", Font.ITALIC, 12));
 		connectionStatusPanel.add(connectionStatusLabel);
-		
 		//add components to this.JPanel
 		this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		this.add(connectionStatusPanel);
 		this.add(buttonsPanel);
-		
 	}
 
 	/**
@@ -83,4 +80,5 @@ public class ManageConnectionButtonsView extends JPanel{
 	public JButton saveSettingsButton;
 	private String status;
 	private JLabel connectionStatusLabel;
+	
 }
