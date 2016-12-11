@@ -15,7 +15,9 @@ import javax.swing.JPanel;
 
 public class CVImageView extends JPanel {
 
-
+	/**
+	 * Constructor initializes Image View for CV Display
+	 */
 	public CVImageView() {
 		initUI();
 	}
@@ -40,7 +42,7 @@ public class CVImageView extends JPanel {
 		imageDisplayPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 5));
 		//create image box
 		try {
-			bufferredImage = ImageIO.read(getClass().getResource("/images/component-480x480.jpg"));
+			bufferredImage = ImageIO.read(getClass().getResource("/images/vision-default-480x480.jpg"));
 		} catch (IOException e) {
 			System.out.println("Error loading CVImageView Class -> unable to load default image");
 		}
@@ -67,6 +69,31 @@ public class CVImageView extends JPanel {
 	 */
 	public void setImage(String path){
 		imageDisplayLabel.setIcon(new ImageIcon(path));
+	}
+	
+	/**
+	 * Set value of component's position, as detected by computer vision
+	 * @param String x position
+	 * @param String y position
+	 */
+	public void setPositionDetails(String x, String y){
+		orientationPanel.setPositionLabel("( " + x + " , " + y + " ) mm");
+	}
+
+	/**
+	 * Set the value of component's angle of rotation, as detected by computer vision
+	 * @param String r angle of rotation
+	 */
+	public void setAngleDetails(String r){
+		orientationPanel.setAngleLabel("( " + r + " ) degrees");
+	}
+	
+	/**
+	 * Set the routine description text
+	 * @param String description of current routine
+	 */
+	public void setRoutineDescription(String description){
+		orientationPanel.setRoutineDescription(description);
 	}
 	
 	/**
