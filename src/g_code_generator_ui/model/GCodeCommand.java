@@ -44,9 +44,14 @@ public class GCodeCommand {
 		//take quick peek at command using regex to check for basic format requirements
 		//A 'G' or 'M' followed by 1 or more digits, then 1 or more spaces, followed by 0 or 1 of 
 		//X, Y, Z, R, F, P, S, each of which is separated by 0 or more spaces
-		String gCodeRegex = "^[G,M]{1}\\d+\\s*(X[+]?\\d+(\\.\\d+)?)?\\s*(Y[+]?\\d+(\\.\\d+)?)?\\s*" +
-				"(Z[+]?\\d+(\\.\\d+)?)?\\s*(R[+]?[-]?\\d+(\\.\\d+)?)?\\s*(P[+]?\\d+(\\.\\d+)?)?\\s*" +
-				"(S[+]?\\d+(\\.\\d+)?)?\\s*(F[+]?\\d+)?\\s*$";
+		String gCodeRegex = "^[G,M]{1}\\d{1,2}" +
+							"\\s*([X]{1}\\d{0,3}(\\.\\d{0,3})?)?" +
+							"\\s*([Y]{1}\\d{0,3}(\\.\\d{0,3})?)?" + 
+							"\\s*([Z]{1}\\d{1,2}(\\.\\d{0,3})?)?" +
+							"\\s*([R]{1}[-]?\\d{1,3}(\\.\\d{0,3})?)?" + 
+							"\\s*([P]{1}\\d+)?" + 
+							"\\s*([S]{1}\\d+)?" +
+							"\\s*([F]{1}\\d{1,4})?\\s*$";
 		//if it matches expected G Code Command Format
 		if(gCodeString.matches(gCodeRegex)){
 			isValidCommand = true;
