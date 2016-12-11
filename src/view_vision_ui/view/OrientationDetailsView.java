@@ -33,17 +33,16 @@ public class OrientationDetailsView extends JPanel{
 		mainPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 5));
 		//labels for (X,Y) Coordinates
-		
 		positionTitle = new JLabel(POSITION_TITLE);
-		positionLabel = new JLabel("(12.53, 24.92) mm");
+		positionLabel = new JLabel(POSITION_DEFAULT);
 		positionLabel.setFont(new Font("Verdana", Font.ITALIC, 12));
 		//labels for rotation
 		angleTitle = new JLabel(ROTATION_TITLE);
-		angleLabel = new JLabel("-43.55 degrees");
+		angleLabel = new JLabel(ROTATION_DEFAULT);
 		angleLabel.setFont(new Font("Verdana", Font.ITALIC, 12));
 		//vision protocol status
-		routineStatusTitle = new JLabel("Vision Routine Status");
-		routineStatusDescription = new JLabel("Preparing to rotate component...");
+		routineStatusTitle = new JLabel(ROUTINE_TITLE);
+		routineStatusDescription = new JLabel(ROUTINE_STATUS_DEFAULT);
 		routineStatusDescription.setFont(new Font("Verdana", Font.ITALIC, 12));
 		//add components to this.JPanel
 		mainPanel.add(positionTitle);
@@ -95,6 +94,10 @@ public class OrientationDetailsView extends JPanel{
 	private JLabel routineStatusDescription;
 	private final String POSITION_TITLE = "Position (X, Y) mm";
 	private final String ROTATION_TITLE = "Rotation (R) deg";
+	private final String ROUTINE_TITLE = "Vision Routine Status";
+	private final String POSITION_DEFAULT = "(X, Y) mm";
+	private final String ROTATION_DEFAULT = "R degrees";
+	private final String ROUTINE_STATUS_DEFAULT = "Waiting for data...";
 	/**
 	 * Default Serial ID
 	 */
