@@ -22,6 +22,7 @@ public class PNPConstants {
 	public static final String EMERGENCY_STOP = "!!!";
 	//threshold for Computer vision routine
 	public static final double IMAGE_ORIENTATION_THRESHOLD = 1.0;
+	public static final double IMAGE_POSITION_THRESHOLD = 0.5;
 	//PNP Main's JFrame Location
 	public static final int JFRAME_X_LOC = 50;
 	public static final int JFRAME_Y_LOC = 25;
