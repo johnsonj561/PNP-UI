@@ -11,13 +11,21 @@ public class ComponentFinder {
 	 * Define Python Script and Path to execute Python OpenCV script
 	 * Python OpenCV script captures image of component and calculates orientation
 	 */
-	public ComponentFinder(){
+	public ComponentFinder(boolean sharpenImage){
+		if(sharpenImage){
+			processBuilder = new ProcessBuilder("python", "PrintComponentOrientation.py", "-s");
+		}
+		else{
+			processBuilder = new ProcessBuilder("python", "PrintComponentOrientation.py");
+
+		}
 		processBuilder = new ProcessBuilder("python", "PrintComponentOrientation.py");
-		processBuilder.directory(new File("C:\\java\\PnPWorkspace\\PnPMachine\\src\\orientation_detection\\"));
+		processBuilder.directory(new File("C:\\java\\PnPWorkspace\\PnPMachine\\src\\orientation_detection\\pyton\\"));
 		processBuilder.redirectErrorStream(true);
 		xCenter = -1;
 		yCenter = -1;
 		orientation = -1;
+		imagePath = "-1";
 	}
 	
 	/**
@@ -43,10 +51,11 @@ public class ComponentFinder {
 	 */
 	private void parseScriptOutput(String output){
 		String[] returnValues = output.split("[ ,]+");
-		if(returnValues.length == 3){
+		if(returnValues.length == 4){
 			xCenter = Double.parseDouble(returnValues[0].replace("X", ""));
 			yCenter = Double.parseDouble(returnValues[1].replace("Y", ""));
 			orientation = Double.parseDouble(returnValues[2]);
+			imagePath = "/images/" + returnValues[3];
 		}
 		//else no components were found
 		//TODO handle no component found error
@@ -78,10 +87,18 @@ public class ComponentFinder {
 		return orientation;
 	}
 	
+	/**
+	 * Get path to component image
+	 * @return String imagePath
+	 */
+	public String getImagePath(){
+		return imagePath;
+	}
 	
 	private ProcessBuilder processBuilder;
 	private BufferedReader inputStream;
 	private double xCenter;
 	private double yCenter;
 	private double orientation;
+	private String imagePath;
 }
