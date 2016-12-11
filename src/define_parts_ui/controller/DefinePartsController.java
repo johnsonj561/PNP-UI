@@ -159,6 +159,7 @@ public class DefinePartsController extends JPanel{
 			addNewPartsView.setXfinal(p.getxFinal());
 			addNewPartsView.setYfinal(p.getyFinal());
 			addNewPartsView.setPartCount(p.getCount() + "");
+			addNewPartsView.setVisionRequired(p.getVisionRequired());
 			//change addnewpartview title and button text to Edit/Save
 			addNewPartsView.savePartButton.setEnabled(true);
 			addNewPartsView.addPartButton.setEnabled(false);
@@ -193,6 +194,7 @@ public class DefinePartsController extends JPanel{
 			definedPartList.get(partIndex).setxFinal(addNewPartsView.getXfinal());
 			definedPartList.get(partIndex).setyFinal(addNewPartsView.getYfinal());
 			definedPartList.get(partIndex).setCount(Integer.parseInt(addNewPartsView.getPartCount()));
+			definedPartList.get(partIndex).setVisionRequired(addNewPartsView.getVisionRequired());
 			//replace the old p with the new p in our definedPartList
 			definedPartListView.updatePart(editPartID, addNewPartsView.getFootprint(), addNewPartsView.getComponentValue());
 			//update part button definitions
@@ -215,7 +217,7 @@ public class DefinePartsController extends JPanel{
 	}
 
 	/**
-	 * 
+	 * Remove part from parts list
 	 * @param partNumber
 	 */
 	private void removePart(int partNumber){
@@ -249,7 +251,7 @@ public class DefinePartsController extends JPanel{
 		//create new part to store features, add new part to our array of defined parts
 		Part newPart = new Part(partID, addNewPartsView.getFootprint(), addNewPartsView.getComponentValue(),
 				addNewPartsView.getCavityPitch(), addNewPartsView.getXinitial(), addNewPartsView.getYinitial(), addNewPartsView.getXfinal(),
-				addNewPartsView.getYfinal(), addNewPartsView.getPartCount());
+				addNewPartsView.getYfinal(), addNewPartsView.getPartCount(), addNewPartsView.getVisionRequired());
 		definedPartList.add(newPart);
 		//add new part values to display definedPartListView
 		definedPartListView.addPart(partID, addNewPartsView.getFootprint(), addNewPartsView.getComponentValue());
