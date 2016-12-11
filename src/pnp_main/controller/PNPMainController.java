@@ -68,12 +68,16 @@ public class PNPMainController extends JPanel implements UsbEvent {
 		//processingJob set to true only when uploading project file to PNP
 		processingJob = false;
 		vacuumOn = false;
+		sharpenImages = false;
+		//PrintStreams defining standard output/error for logging
+		stdOut = System.out;
+		stdError = System.err;
 		//initialize all views
 		initUI();
 		//initialize buttons
 		initButtons();
 		//set std output to log file
-		defineLogFile();
+		//defineLogFile();
 		//System.setOut(pnpLog);
 		//System.setErr(pnpLog);
 		System.out.println("New PNPMainController()\n");
@@ -140,6 +144,7 @@ public class PNPMainController extends JPanel implements UsbEvent {
 				new ActionListener() {
 					@Override
 					public void actionPerformed(ActionEvent e) {
+						System.out.println("New settings saved");
 						connectionSettings.setBaudRate(connectionSettingsController.getBaudRate());
 						connectionSettings.setWidth(connectionSettingsController.getPlatformWidth());
 						connectionSettings.setDepth(connectionSettingsController.getPlatformDepth());
@@ -162,6 +167,20 @@ public class PNPMainController extends JPanel implements UsbEvent {
 						restoreDefaults();
 					}
 				});
+		connectionSettingsController.logFileView.enableLogCheckBox.addActionListener(
+				new ActionListener() {
+					@Override
+					public void actionPerformed(ActionEvent e) {
+						if(connectionSettingsController.logFileView.enableLogCheckBox.isSelected()){
+							enableLogFile();
+						}
+						else{
+							disableLogFile();
+						}
+
+					}
+				});
+
 		//jog x plus button
 		manualController.jogButtonView.jogXPlusButton.addActionListener(
 				new ActionListener() {
@@ -398,7 +417,7 @@ public class PNPMainController extends JPanel implements UsbEvent {
 	 * PNP Application will generate PNPLog directory in C directory if it does not exist
 	 * C:\PNPLog\MM.dd.yyyy-HH.mm.ss.txt
 	 */
-	private void defineLogFile(){
+	private void enableLogFile(){
 		//create directory for PNP log files if it does not exist
 		File logDirectory = new File("C:/PNPLog");
 		if(!logDirectory.exists()){
@@ -406,7 +425,9 @@ public class PNPMainController extends JPanel implements UsbEvent {
 		}
 		//create text file with timestamp as name
 		String logFile = new SimpleDateFormat("MM.dd.yyyy-HH.mm.ss").format(new Date());
-		File file = new File("C:/PNPLog/" + logFile + ".txt");
+		String path = "C:/PNPLog/" + logFile + ".txt";
+		File file = new File(path);
+		//if file doesn't exist, make it!
 		if(!file.exists()){
 			try {
 				file.createNewFile();
@@ -414,14 +435,28 @@ public class PNPMainController extends JPanel implements UsbEvent {
 				updateConnectionStatusMessage(PNPConstants.STATUS_LOG_FILE_ERROR);
 			}
 		}
+		//file now exists
 		try {
 			PrintStream pnpLog = new PrintStream(file);
 			System.setOut(pnpLog);
 			System.setErr(pnpLog);
+			connectionSettingsController.logFileView.updateLogFileLocation(path);
 		} catch (FileNotFoundException e) {
+			System.setOut(stdOut);
+			System.setErr(stdError);
 			updateConnectionStatusMessage(PNPConstants.STATUS_LOG_FILE_ERROR);
+			connectionSettingsController.logFileView.updateLogFileLocation("");
 		}
+	}
 
+	/**
+	 * Disables logging by returning to standard System.out and and System.err
+	 * Removes path from Log File location label
+	 */
+	private void disableLogFile(){
+		System.setOut(stdOut);
+		System.setErr(stdError);
+		connectionSettingsController.logFileView.updateLogFileLocation("");
 	}
 
 	/**
@@ -566,6 +601,15 @@ public class PNPMainController extends JPanel implements UsbEvent {
 			//package command into GCodeCommand object
 			GCodeCommand command = new GCodeCommand(message, connectionSettings.getWidth(),
 					connectionSettings.getDepth(), connectionSettings.getHeight());
+			//if feed rate is not defined and move is X or Y move, use feed rate defined in settings
+			if(!command.isfCommand()){
+				if(command.isxMove() || command.isyMove()){
+					message += " F" + connectionSettings.getFeedRate();
+					command = new GCodeCommand(message, connectionSettings.getWidth(),
+							connectionSettings.getDepth(), connectionSettings.getHeight());
+				}
+			}
+			//if command is valid
 			if(command.isValidCommand()){
 				//if computer vision command
 				if(command.isG56Command()){
@@ -1018,8 +1062,17 @@ public class PNPMainController extends JPanel implements UsbEvent {
 	 * @return true if
 	 */
 	private void zeroComponentOrientation(){
-		ComponentFinder mComponentFinder = new ComponentFinder();
+		ComponentFinder mComponentFinder = new ComponentFinder(sharpenImages);
 		mComponentFinder.captureImageData();
+		//if we've already taken an image, save that image path so we can delete file
+		if(newImagePath != null){
+			oldImagePath = newImagePath;
+			deleteFile(oldImagePath);
+		}
+		//set new image
+		viewVisionConroller.setImage(mComponentFinder.getImagePath());
+		viewVisionConroller.setImageDetails(mComponentFinder.getXCenter(), mComponentFinder.getYCenter(),
+				mComponentFinder.getOrientation());
 		//check if THRESHOLD < Orientation < THRESHOLD
 		if(Math.abs(mComponentFinder.getOrientation()) > PNPConstants.IMAGE_ORIENTATION_THRESHOLD){
 			sendMessage("G1 R" + mComponentFinder.getOrientation());
@@ -1031,6 +1084,22 @@ public class PNPMainController extends JPanel implements UsbEvent {
 			processingImageData = false;
 		}
 	}
+
+	/**
+	 * Delete file found at path
+	 * Old images are deleted to reduce memory requirements
+	 * @param String path
+	 */
+	private void deleteFile(String path){
+		File f = new File(path);
+		if(f.delete()){
+			System.out.println("\nPNPMainController -> Old Image Deleted: " + path);
+		}
+		else{
+			System.out.println("\nPNPMainController -> Unable To Delete: " + path);
+		}
+	}
+
 
 	/**
 	 * Default Serial Version UID
@@ -1070,4 +1139,11 @@ public class PNPMainController extends JPanel implements UsbEvent {
 	private boolean jobPaused;
 	//processing Computer Vision routine
 	private boolean processingImageData;
+	private boolean sharpenImages;
+	private String newImagePath;
+	private String oldImagePath;
+	//Printstreams for log files
+	private PrintStream stdOut;
+	private PrintStream stdError;
+
 }
