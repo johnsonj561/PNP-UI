@@ -12,6 +12,7 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -42,7 +43,7 @@ public class AddNewPartView extends JPanel{
 	 * Initialize UI elements
 	 */
 	private void initUI(){
-		//Footprint selection panel
+		//Footprint selection and Vision Required panel
 		footprintSelectionPanel = new JPanel();
 		footprintSelectionPanel.setLayout(new BoxLayout(footprintSelectionPanel, BoxLayout.X_AXIS));
 		footprintSelectionPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -56,9 +57,18 @@ public class AddNewPartView extends JPanel{
 		footprintSelectionComboBox.setMaximumSize(new Dimension(COMBO_BOX_WIDTH, footprintSelectionComboBox.getPreferredSize().height));
 		footprintSelectionComboBox.setMinimumSize(new Dimension(COMBO_BOX_WIDTH, footprintSelectionComboBox.getPreferredSize().height));
 		footprintSelectionComboBox.setSelectedIndex(0);
+		visionRequiredLabel = new JLabel("Vision Required");
+		visionRequiredLabel.setMinimumSize(new Dimension(LABEL_WIDTH, visionRequiredLabel.getPreferredSize().height));
+		visionRequiredLabel.setPreferredSize(new Dimension(LABEL_WIDTH, visionRequiredLabel.getPreferredSize().height));
+		visionRequiredLabel.setMaximumSize(new Dimension(LABEL_WIDTH, visionRequiredLabel.getPreferredSize().height));
+		visionRequiredCheckBox = new JCheckBox();
 		footprintSelectionPanel.add(footprintSelectionLabel);
 		footprintSelectionPanel.add(Box.createRigidArea(new Dimension(10, 0)));
 		footprintSelectionPanel.add(footprintSelectionComboBox);
+		footprintSelectionPanel.add(Box.createRigidArea(new Dimension(30, 0)));
+		footprintSelectionPanel.add(visionRequiredLabel);
+		footprintSelectionPanel.add(Box.createRigidArea(new Dimension(5, 0)));
+		footprintSelectionPanel.add(visionRequiredCheckBox);
 		//Component value selection panel
 		componentValueSelectionPanel = new JPanel();
 		componentValueSelectionPanel.setLayout(new BoxLayout(componentValueSelectionPanel, BoxLayout.X_AXIS));
@@ -390,6 +400,30 @@ public class AddNewPartView extends JPanel{
 	}
 	
 	/**
+	 * Get value of Vision Required Check Box
+	 * @return int 1 if vision is required, int 0 if vision is not required
+	 */
+	public int getVisionRequired(){
+		if(visionRequiredCheckBox.isSelected()){
+			return 1;
+		}
+		return 0;
+	}
+	
+	/**
+	 * Set value of Vision Required Check Box
+	 * @param int required
+	 */
+	public void setVisionRequired(int required){
+		if(required == 0){
+			visionRequiredCheckBox.setSelected(false);
+		}
+		else{
+			visionRequiredCheckBox.setSelected(true);
+		}
+	}
+	
+	/**
 	 * Default serial UID
 	 */
 	private static final long serialVersionUID = 1L;
@@ -401,6 +435,9 @@ public class AddNewPartView extends JPanel{
 	private JPanel footprintSelectionPanel;
 	private JLabel footprintSelectionLabel;
 	private JComboBox<String> footprintSelectionComboBox;
+	//Vision control options
+	private JLabel visionRequiredLabel;
+	private JCheckBox visionRequiredCheckBox;
 	//set component value 
 	private JPanel componentValueSelectionPanel;
 	private JLabel componentValueSelectionLabel;

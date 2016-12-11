@@ -71,7 +71,7 @@ public class PartsFileParser {
 			String[] features = parsePartAttributes(part);
 			Part p = new Part(Integer.parseInt(features[0]), features[1], features[2], features[3],
 					Double.parseDouble(features[4]), Double.parseDouble(features[5]), Double.parseDouble(features[6]),
-					Double.parseDouble(features[7]), features[8]);
+					Double.parseDouble(features[7]), features[8], Integer.parseInt(features[9]));
 			if(p.isValidPartPosition()){
 				partArray.add(p);
 			}

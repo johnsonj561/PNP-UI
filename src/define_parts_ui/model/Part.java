@@ -9,7 +9,7 @@ package define_parts_ui.model;
  */
 public class Part {
 
-	public Part(int id, String fp, String val, String pitch, double xi, double yi, double xf, double yf, String c) {
+	public Part(int id, String fp, String val, String pitch, double xi, double yi, double xf, double yf, String c, int v) {
 		partID = id;
 		footprint = fp;
 		value = val;
@@ -19,6 +19,7 @@ public class Part {
 		xFinal = xf;
 		yFinal = yf;
 		count = Integer.parseInt(c);
+		visionRequired = v;
 		//create a String of all part features
 		partFeatureString = makePartFeatureString();
 		//create an array of coordinates where each cell stores a part's (x,y) location
@@ -116,7 +117,7 @@ public class Part {
 	 */
 	private String makePartFeatureString(){
 		return partID + ", " + footprint + ", " + value + ", " + cavityPitch + ", " + xInitial + ", " + yInitial + ", " +
-				xFinal + ", " + yFinal + ", " + count;	
+				xFinal + ", " + yFinal + ", " + count + ", " + visionRequired;	
 	}
 
 	/**
@@ -346,6 +347,22 @@ public class Part {
 	}
 
 	/**
+	 * Get value of vision required (1 = required, 0 = not required)
+	 * @return int visionRequired
+	 */
+	public int getVisionRequired(){
+		return visionRequired;
+	}
+	
+	/**
+	 * Set value of vision required (1 = required, 0 = not required)
+	 * @param int required
+	 */
+	public void setVisionRequired(int required){
+		visionRequired = required;
+	}
+	
+	/**
 	 * Return true if defined part is a reel
 	 * @return boolean isReel
 	 */
@@ -372,6 +389,7 @@ public class Part {
 	private double xFinal;
 	private double yFinal;
 	private int count;
+	private int visionRequired;
 	private double theta;
 	//comma separated String of part features
 	private String partFeatureString;
