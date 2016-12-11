@@ -10,6 +10,7 @@ import manual_control_ui.view.EmergencyStopView;
 
 import jssc.SerialPortException;
 import connection_settings_ui.model.ConnectionSettingsModel;
+import connection_settings_ui.view.LogFileView;
 import connection_settings_ui.view.ManageConnectionButtonsView;
 import connection_settings_ui.view.SettingsInputTextView;
 import connection_settings_ui.view.SettingsPortSelectionView;
@@ -86,6 +87,10 @@ public class ConnectionSettingsController extends JPanel{
 		connectionButtonAndEmergencyStopPanel.add(connectionButtonPanel);
 		connectionButtonAndEmergencyStopPanel.add(Box.createRigidArea(new Dimension(50, 0)));
 		connectionButtonAndEmergencyStopPanel.add(emergencyStopPanel);
+		//log file panel
+		logFileView = new LogFileView();
+		logFileView.setAlignmentX(JPanel.LEFT_ALIGNMENT);
+		
 		//Add individual components to this.JPanel for final display, laid on vertically along y Axis
 		this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		this.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));
@@ -98,6 +103,7 @@ public class ConnectionSettingsController extends JPanel{
 		this.add(feedRateInput);
 		this.add(portSelectionInput);
 		this.add(connectionButtonAndEmergencyStopPanel);
+		this.add(logFileView);
 	}
 
 	/**
@@ -209,4 +215,5 @@ public class ConnectionSettingsController extends JPanel{
 	private JPanel connectionButtonAndEmergencyStopPanel;
 	public SettingsPortSelectionView portSelectionInput;
 	public ManageConnectionButtonsView connectionButtons;
+	public LogFileView logFileView;
 }
