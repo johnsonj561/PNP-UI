@@ -13,8 +13,9 @@ class ComponentTracker():
     self.image_path = input_image;
     self.input_image = cv2.imread(input_image)
     self.image_saved = False
-    self.IMAGE_WIDTH = 640
-    self.IMAGE_HEIGHT = 480
+    self.IMAGE_WIDTH = 1280
+    self.IMAGE_HEIGHT = 720
+    self.contourApproximationThreshold = 0.01
   
   # Threshold image and generate binary output image
   # @param int l = lower bound of threshold
@@ -72,7 +73,7 @@ class ComponentTracker():
         # Approximate shape and remove noise using approxPolyDP(contour, epsilon, closed contour)
         # Value for epsilon should be adjusted to fine tune component's shape approximation
         # epsilon = 10% of perimiter
-        epsilon = perimeter*0.1
+        epsilon = perimeter*self.contourApproximationThreshold
         approxShape = cv2.approxPolyDP(c, epsilon, True)
         # Check if shape has has 4 edges
         if len(approxShape) == 4:
@@ -91,15 +92,16 @@ class ComponentTracker():
   # Rectangle = min area rectangle representation of approximated contours
   # Rectangle is defined by findContourRectangle()
   def drawContoursFromRectangle(self, rect):
+    thickness = 2
     # boxPoints finds four vertices of a rotated rectangle
     box = cv2.boxPoints(rect)
     box = np.int0(box)
     # drawContours(image to draw on, contours to draw, index of contour to draw, color, and thickness
-    cv2.drawContours(self.input_image, [box], 0,(0, 255, 0), 1)
+    cv2.drawContours(self.input_image, [box], 0,(0, 255, 0), thickness)
 
   # Draws cross-hair over image to help visualize component's orientation  
   def drawCrossHair(self):
-    thickness = 1
+    thickness = 2
     # define end points of lines
     midX = self.IMAGE_WIDTH/2
     midY = self.IMAGE_HEIGHT/2
@@ -182,10 +184,13 @@ class ComponentTracker():
     return orientationDetails
   
   # Saves image output to with filename equal to current timestamp in format 'Ymd-HMS.jpg'
-  def saveOutputImage(self):
+  def saveOutputImage(self, showImage = False):
     self.image_path = time.strftime("%Y%m%d-%H%M%S") + ".jpg"
     cv2.imwrite(self.image_path, self.input_image);
     self.image_saved = True
+    if showImage:
+      cv2.imshow("Component Found", self.input_image)
+      
     
   # Display output image to user and give user option to save
   # Close all windows on completion
