@@ -68,6 +68,7 @@ public class PNPMainController extends JPanel implements UsbEvent {
 		//processingJob set to true only when uploading project file to PNP
 		processingJob = false;
 		vacuumOn = false;
+		lightBoxOn = false;
 		sharpenImages = false;
 		//PrintStreams defining standard output/error for logging
 		stdOut = System.out;
@@ -603,7 +604,11 @@ public class PNPMainController extends JPanel implements UsbEvent {
 					connectionSettings.getDepth(), connectionSettings.getHeight());
 			//if feed rate is not defined and move is X or Y move, use feed rate defined in settings
 			if(!command.isfCommand()){
-				if(command.isxMove() || command.isyMove()){
+				//if it is G28 command, do not apply the feed rate
+				if(command.isgCommand() && command.getgValue() == 28){
+					//do nothing
+				}
+				else if(command.isxMove() || command.isyMove()){
 					message += " F" + connectionSettings.getFeedRate();
 					command = new GCodeCommand(message, connectionSettings.getWidth(),
 							connectionSettings.getDepth(), connectionSettings.getHeight());
@@ -620,6 +625,17 @@ public class PNPMainController extends JPanel implements UsbEvent {
 					//if command contains a Z value or F value, do not append feed rate
 					if(command.iszMove() || command.isfCommand()){
 						message += "F" + command.getfValue();
+					}
+					//if G28 called, make sure Z is > 5 to prevent head hitting lightbox
+					if(command.isgCommand() && command.getfValue() == 28){
+						if(currentZ < PNPConstants.LIGHTBOX_HEIGHT){
+							System.out.println("PNPMainController: sendMessage(String message): current Z must be" +
+									" greater than " + PNPConstants.LIGHTBOX_HEIGHT + " before Homing machine");
+							manualController.updateErrorMessage("Z Axis must be lifted above " + PNPConstants.LIGHTBOX_HEIGHT + 
+									" before Homing");
+							restorePreviousValues();
+							return false;
+						}
 					}
 					//send message, if succeeds then update CTS and return true
 					if(usbDevice.writeMessage(message + "\n")){
@@ -747,11 +763,17 @@ public class PNPMainController extends JPanel implements UsbEvent {
 			if(command.ismCommand()){
 				if(command.getmValue() == 10){
 					System.out.println("PNPMainController: updateValuesFromCommand(): Updating Vacuum State: VACUUM ON\n");
-					//vacuumOn = true;
+					vacuumOn = true;
 				}
 				else if(command.getmValue() == 11){
 					System.out.println("PNPMainController: updateValuesFromCommand(): Updating Vacuum State: VACUUM OF\n");
-					//vacuumOn = false;
+					vacuumOn = false;
+				}
+				else if(command.getmValue() == 12){
+					lightBoxOn = true;
+				}
+				else if(command.getmValue() == 13){
+					lightBoxOn = false;
 				}
 				else{
 					System.out.println("PNPMainController: updateValuesFromCommand(): Invalid Value Detected for 'M'\n");
@@ -892,11 +914,11 @@ public class PNPMainController extends JPanel implements UsbEvent {
 	private void toggleVacuum(boolean turnOn){
 		if(turnOn){
 			vacuumOn = true;
-			sendMessage("M10");
+			sendMessage(PNPConstants.VACUUM_ON);
 		}
 		else{
 			vacuumOn = false;
-			sendMessage("M11");
+			sendMessage(PNPConstants.VACUUM_OFF);
 		}
 	}
 
@@ -918,8 +940,15 @@ public class PNPMainController extends JPanel implements UsbEvent {
 			}
 			else{
 				verifyUIPositionAgainstPICPosition(picReturnCommand);
+				//if processing image data in zeroComponentOrientation() method
+				//continue to zeroComponentOrientation()
+				if(processingImageData){
+					System.out.println("PNPMainController UsbReadEvent -> processingImageData");
+					CTS = true;
+					zeroComponentOrientation();
+				}
 				//if we are processing a PNP File, send the next instruction
-				if(processingJob){
+				else if(processingJob){
 					CTS = true;
 					importGCodePanel.gCodeConsoleView.removeHighlightLine(currentInstructionIndex);
 					currentInstructionIndex++;
@@ -938,12 +967,6 @@ public class PNPMainController extends JPanel implements UsbEvent {
 						//JOB COMPLETE - ALLOW USER TO SAVE UPDATED PARTS FILE
 						displaySavePartFilesDialog();
 					}
-				}
-				//if processing image data in zeroComponentOrientation() method
-				//continue to zeroComponentOrientation()
-				else if(processingImageData){
-					CTS = true;
-					zeroComponentOrientation();
 				}
 				else{
 					CTS = true;
@@ -1062,29 +1085,56 @@ public class PNPMainController extends JPanel implements UsbEvent {
 	 * @return true if
 	 */
 	private void zeroComponentOrientation(){
+		//make application aware of Computer Vision Routine
+		processingImageData = true;
+		//lift component, move to light box, turn light on
+		sendMessage(PNPConstants.LIFT_ABOVE_LIGHTBOX);
+		sendMessage(PNPConstants.MOVE_TO_LIGHTBOX);
+		sendMessage(PNPConstants.LIGHT_ON);
+		sendMessage(PNPConstants.LOWER_TO_LIGHTBOX);
 		ComponentFinder mComponentFinder = new ComponentFinder(sharpenImages);
 		mComponentFinder.captureImageData();
-		//if we've already taken an image, save that image path so we can delete file
-		if(newImagePath != null){
+		sendMessage(PNPConstants.LIGHT_OFF);
+		sendMessage(PNPConstants.LIFT_ABOVE_LIGHTBOX);
+		//if an image was found, process data
+		if(mComponentFinder.foundComponent()){
+			//prepare old image to be deleted
 			oldImagePath = newImagePath;
-			deleteFile(oldImagePath);
+			//get new image from component finder object
+			newImagePath = mComponentFinder.getImagePath();
+			viewVisionConroller.setImage(newImagePath);
+			viewVisionConroller.setImageDetails(mComponentFinder.getXCenter(), mComponentFinder.getYCenter(),
+					mComponentFinder.getOrientation());
+			//if we have an old image to delete, delete it.
+			if(oldImagePath != null || !oldImagePath.equalsIgnoreCase("-1")){
+				deleteFile(oldImagePath);
+			}
+			//check if THRESHOLD < Orientation < THRESHOLD
+			if(Math.abs(mComponentFinder.getOrientation()) > PNPConstants.IMAGE_ORIENTATION_THRESHOLD){
+				sendMessage("G1 R" + mComponentFinder.getOrientation());
+				processingImageData = true;
+			}
+			//else component does not require rotation
+			//processingImageData routine is complete
+			else{
+				processingImageData = false;
+			}
 		}
-		//set new image
-		viewVisionConroller.setImage(mComponentFinder.getImagePath());
-		viewVisionConroller.setImageDetails(mComponentFinder.getXCenter(), mComponentFinder.getYCenter(),
-				mComponentFinder.getOrientation());
-		//check if THRESHOLD < Orientation < THRESHOLD
-		if(Math.abs(mComponentFinder.getOrientation()) > PNPConstants.IMAGE_ORIENTATION_THRESHOLD){
-			sendMessage("G1 R" + mComponentFinder.getOrientation());
-			processingImageData = true;
-		}
-		//else component does not require rotation
-		//processingImageData routine is complete
+		//else no image was found, alert user to continue
 		else{
+			displayNoImageDialog();
 			processingImageData = false;
 		}
 	}
 
+	/**
+	 * Display dialog box that alerts user of no image found in computer vision system
+	 */
+	private void displayNoImageDialog(){
+		JDialog.setDefaultLookAndFeelDecorated(true);
+		JOptionPane.showMessageDialog(null, "Computer Vision Unable To Locate Component", "No Image Found", JOptionPane.INFORMATION_MESSAGE);
+	}
+	
 	/**
 	 * Delete file found at path
 	 * Old images are deleted to reduce memory requirements
@@ -1138,6 +1188,7 @@ public class PNPMainController extends JPanel implements UsbEvent {
 	private int currentInstructionIndex;
 	private boolean jobPaused;
 	//processing Computer Vision routine
+	private boolean lightBoxOn;
 	private boolean processingImageData;
 	private boolean sharpenImages;
 	private String newImagePath;
