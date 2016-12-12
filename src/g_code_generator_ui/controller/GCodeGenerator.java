@@ -5,6 +5,8 @@ import g_code_generator_ui.model.AltiumSMTComponent;
 import g_code_generator_ui.model.EagleSMTComponent;
 import java.util.ArrayList;
 import java.util.List;
+
+import pnp_main.model.PNPConstants;
 import define_parts_ui.controller.PartsFileParser;
 import define_parts_ui.model.Part;
 import define_parts_ui.model.XYCoordinate;
@@ -66,8 +68,15 @@ public class GCodeGenerator {
 	 * Common start up settings include: units, absolute coordinates, home x coord, home y coord, home z coord, baudrate
 	 */
 	public String initializeGCode(){
-		String gCode = ";G21; Set units to millimeters\n;G90; Set absolute coordinates\nG1 Z4;lift head\nG28; Home x and y axis\n";
-		gCode += "G1 F1000; Set feed rate (speed) for first move\n\n";
+		// display project information
+		String gCode = "; Florida Atlantic University\n" +
+						"; Engineering Design 2 - PIC n Place Project\n" + 
+						"; Design By: Sam Rosenfield, Stephen Lyons, Justin Johnson\n" +
+						"; PIC n Place Project Initialized\n\n";
+		// initialize Gcode settings
+		gCode = "\nG1 Z6 ; lift head\n" +
+				"G1 F1500 ; Set feed rate for first move\n"	+	
+				"G28 ; Home Machine's X and Y axis\n\n";
 		return gCode;
 	}
 
@@ -79,17 +88,16 @@ public class GCodeGenerator {
 		String gCode = "";
 		if(inputFileType == EAGLE_CENTROID_FILE){
 			for(int i = 0; i < eagleInputComponents.length; i++){
+				boolean visionRequired = requiresVision(eagleInputComponents[i]);
 				gCode += moveToPart(eagleInputComponents[i]);
-				gCode += pickUpComponent();
 				gCode += rotateHead("0.00");
+				gCode += pickUpComponent();
+				gCode += rotateHead(eagleInputComponents[i].getRotation());
 				//if alignment through CV is required, move to light box
-				if(eagleInputComponents[i].isIC()){
-					gCode += moveToLocation(LIGHT_BOX_X, LIGHT_BOX_Y);
-					//G56 notifies UI to rotate IC until angle is 0
-					gCode += "G56\n";
+				if(visionRequired){
+					gCode += "G56 ; COMPUTER VISION ROUTINE\n";
 				}
 				gCode += moveToLocation(eagleInputComponents[i].getxCoordinate(), eagleInputComponents[i].getyCoordinate());
-				gCode += rotateHead(eagleInputComponents[i].getRotation());
 				gCode += lowerComponent();
 				gCode += rotateHead("0.00") + "\n";
 			}
@@ -100,10 +108,8 @@ public class GCodeGenerator {
 				gCode += pickUpComponent();
 				gCode += rotateHead("0.0");
 				//if alignment through CV is required, move to light box
-				if(altiumInputComponents[i].isIC()){
-					gCode += moveToLocation(LIGHT_BOX_X, LIGHT_BOX_Y);
-					//G56 notifies UI to rotate IC until angle is 0
-					gCode += "G56\n";
+				if(requiresVision(altiumInputComponents[i])){
+					gCode += "G56 ; COMPUTER VISION ROUTINE\n";
 				}
 				gCode += moveToLocation(altiumInputComponents[i].getxCoordinate(), altiumInputComponents[i].getyCoordinate());
 				// Need altium file's angle of rotation
@@ -114,7 +120,7 @@ public class GCodeGenerator {
 		else{
 			return "Error: Invalid Centroid File Type Provided. Please use Altium or Eagle file types.";
 		}
-		gCode += "\nG1 F8000\nG28;Job Complete, Return To Home";
+		gCode += "\nG1 F3000\nG28 ; Job Complete, Return To Home";
 		tempPartString = updatePartFile();
 		return gCode;
 	}
@@ -125,7 +131,7 @@ public class GCodeGenerator {
 	 * @return String gCode instruction to rotate head
 	 */
 	private String rotateHead(String theta){
-		return "G1 R" + theta + ";rotating head to match angle of part\n";
+		return "G1 R" + theta + " ; rotating head to " + theta + "\n";
 	}
 	
 	/**
@@ -143,11 +149,11 @@ public class GCodeGenerator {
 					//if we found matching footprint and value available for use, return G Code to This Part
 					XYCoordinate coordinates = part.getNextPartLocation();
 					if(coordinates != null){
-						return "G1 Z4 F300;lift head before moving" +
+						return "G1 Z6 F300 ; lift head before moving" +
 								"\nG1 X" + coordinates.getxCoordinate() + 
 								" Y" + coordinates.getyCoordinate() + 
-								" F1000;moving head to next part\n" +
-								"G1 R" + part.getTheta() + ";Rotating to angle of part\n";
+								" F1000 ; moving head to next part\n" +
+								"G1 R" + part.getTheta() + " ; Rotating to angle of part\n";
 					}
 				}
 			}
@@ -168,11 +174,11 @@ public class GCodeGenerator {
 					//if we found part and there is 1 available for use, return G Code to This Part
 					XYCoordinate coordinates = part.getNextPartLocation();
 					if(coordinates != null){
-						return "G1 Z4 F300;lift head before moving" +
+						return "G1 Z6 F300 ; lift head before moving" +
 								"\nG1 X" + coordinates.getxCoordinate() + 
 								" Y" + coordinates.getyCoordinate() + 
-								" F1000\t;moving head to next part\n" +
-								"G1 R" + part.getTheta() + ";Rotating to angle of part\n";
+								" F1000\t ; moving head to next part\n" +
+								"G1 R" + part.getTheta() + " ; Rotating to angle of part\n";
 					}
 				}
 			}
@@ -180,6 +186,46 @@ public class GCodeGenerator {
 		return "\nPART NOT FOUND\n";
 	}
 
+	
+	private boolean requiresVision(EagleSMTComponent component){
+		if(inputFileType == EAGLE_CENTROID_FILE){
+			String componentPackageType = component.getPackageType();
+			String componentValue = component.getValue();
+			for(Part part : partArray){
+				if(componentPackageType.contentEquals(part.getFootprint()) 
+						&& componentValue.contentEquals(part.getValue())){
+					//if we found matching footprint and value available for use, return G Code to This Part
+					if(part.getVisionRequired() == 1){
+						System.out.println("GCodeGenerator: Vision for " + componentPackageType + " is required");
+						return true;
+					}
+					System.out.println("GCodeGenerator: Vision for " + componentPackageType + " not required");
+					return false;
+				}
+			}
+		}
+		return false;
+	}
+	
+	
+	private boolean requiresVision(AltiumSMTComponent component){
+		if(inputFileType == ALTIUM_CENTROID_FILE){
+			String componentRefDesignator = component.getRefDesignator();
+			for(Part part : partArray){
+				if(componentRefDesignator.contentEquals(part.getFootprint())){
+					//if we found matching footprint and value available for use, return G Code to This Part
+					if(part.getVisionRequired() == 1){
+						System.out.println("GCodeGenerator: Vision for " + componentRefDesignator + " is required");
+						return true;
+					}
+					System.out.println("GCodeGenerator: Vision for " + componentRefDesignator + " not required");
+					return false;
+					}
+			}
+		}
+		return false;
+	}
+	
 	/**
 	 * Generate G Code to move head to given location
 	 * @param xCoord being moved to
@@ -187,10 +233,10 @@ public class GCodeGenerator {
 	 * @return String G Code instructions that move to location (xCoord, yCoord)
 	 */
 	private String moveToLocation(String xCoord, String yCoord){
-		return "G1 Z4 F300;lift head before moving" +
+		return "G1 Z6 F300 ; lift head before moving" +
 				"\nG1 X" + xCoord + 
 				" Y" + yCoord + 
-				" F1000 ;moving head to location (" + xCoord + ", " + yCoord + ")\n";
+				" F1000 ; moving head to location (" + xCoord + ", " + yCoord + ")\n";
 	}
 
 	/**
@@ -198,10 +244,10 @@ public class GCodeGenerator {
 	 * @return String G Code instructions that lower head, turn on vacuum, and lift part 
 	 */
 	private String pickUpComponent(){
-		return "G1 Z0 F300;Lower head to component" +
-				"\nM10; Vacuum On" +
-				"\nG4 P5000;delay" +
-				"\nG1 Z4 F300;Lift head off table\n";
+		return "G1 Z0 F300 ; Lower head to component" +
+				"\nM10 ; Vacuum On" +
+				"\nG4 P5000 ; delay" +
+				"\nG1 Z6 F300 ; Lift head off table\n";
 	}
 
 	/**
@@ -212,7 +258,7 @@ public class GCodeGenerator {
 		return "G1 Z0 F300;Lower head to PCB board" +
 				"\nM11; Vacuum Off" +
 				"\nG4 P5000;delay" +
-				"\nG1 Z4 F300;Lift head off PCB board\n";
+				"\nG1 Z6 F300;Lift head off PCB board\n";
 	}
 
 	/**
@@ -335,9 +381,6 @@ public class GCodeGenerator {
 	private List<String> centroidComponentList;
 	//flag to detect proper parsing
 	private boolean isValidInput;
-	//board offsets define bottom left corner of PCB board
-	private final String LIGHT_BOX_X = "100.0";
-	private final String LIGHT_BOX_Y = "100.0";
 	//string to hold updated part values
 	private String tempPartString;
 }
