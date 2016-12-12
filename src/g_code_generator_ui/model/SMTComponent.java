@@ -1,5 +1,7 @@
 package g_code_generator_ui.model;
 
+import pnp_main.model.PNPConstants;
+
 /**
  * SMTComponent Class provides functionality for storing and manipulating component attributes
  * @author Justin Johnson
@@ -51,6 +53,4 @@ public class SMTComponent {
 	
 	protected String[] attributeList;
 	protected String[] attributeTitles;
-	protected final double PCB_X_OFFSET = 89.25;
-	protected final double PCB_Y_OFFSET = 80;
 }
