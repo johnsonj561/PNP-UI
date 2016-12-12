@@ -214,6 +214,11 @@ public class GCodeCommand {
 				System.out.println("there can't be an X Y Z R S P or F associated with a M");
 				return false;
 			}
+			//M values must be 10 11 12 or 13
+			if(mValue < 10 || mValue > 13){
+				System.out.println("Invalid M value found: " + mValue);
+				return false;
+			}
 		}
 		return true;
 	}
