@@ -26,6 +26,7 @@ public class ComponentFinder {
 		yCenter = -1;
 		orientation = -1;
 		imagePath = "-1";
+		imageFound = false;
 	}
 	
 	/**
@@ -40,6 +41,7 @@ public class ComponentFinder {
 			return true;
 		} catch (IOException e) {
 			System.out.println("ComponentFinder: -> Unable to launch OpenCV script. No image captured.");
+			imageFound = false;
 			return false;
 		}
 		
@@ -56,12 +58,23 @@ public class ComponentFinder {
 			yCenter = Double.parseDouble(returnValues[1].replace("Y", ""));
 			orientation = Double.parseDouble(returnValues[2]);
 			imagePath = "/images/" + returnValues[3];
+			imageFound = true;
 		}
-		//else no components were found
-		//TODO handle no component found error
-		//take another image, or home and get new part
+		else{
+			imageFound = false;
+		}
 		
 	}
+	
+	
+	/**
+	 * Returns true if a component was found
+	 * @return True if component found
+	 */
+	public boolean foundComponent(){
+		return imageFound;
+	}
+	
 	
 	/**
 	 * Get component center's x-coordinate as defined by last call to captureComponentImage()
@@ -101,4 +114,5 @@ public class ComponentFinder {
 	private double yCenter;
 	private double orientation;
 	private String imagePath;
+	private boolean imageFound;
 }
