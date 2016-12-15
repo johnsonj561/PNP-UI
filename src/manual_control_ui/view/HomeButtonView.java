@@ -30,6 +30,7 @@ public class HomeButtonView extends JPanel{
 		homeButtonPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 		homeXButton = new JButton("X Home");
 		homeYButton = new JButton("Y Home");
+		lightBoxButton = new JButton("Light Box");
 		
 		homeAllButton = new JButton("Home All");
 		homeButtonPanel.add(homeAllButton);
@@ -37,6 +38,8 @@ public class HomeButtonView extends JPanel{
 		homeButtonPanel.add(homeXButton);
 		homeButtonPanel.add(Box.createRigidArea(new Dimension(50, 0)));
 		homeButtonPanel.add(homeYButton);
+		homeButtonPanel.add(Box.createRigidArea(new Dimension(50, 0)));
+		homeButtonPanel.add(lightBoxButton);
 		
 		//add elements to this layout
 		this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
@@ -56,4 +59,5 @@ public class HomeButtonView extends JPanel{
 	public JButton homeXButton;
 	public JButton homeYButton;
 	public JButton homeAllButton;
+	public JButton lightBoxButton;
 }
