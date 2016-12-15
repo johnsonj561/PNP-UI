@@ -1,6 +1,5 @@
 package g_code_generator_ui.model;
 
-import pnp_main.model.PNPConstants;
 
 /**
  * SMTComponent Class provides functionality for storing and manipulating component attributes

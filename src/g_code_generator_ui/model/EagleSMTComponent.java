@@ -25,8 +25,8 @@ public class EagleSMTComponent extends SMTComponent{
 			double dXCoordinate = (double)Math.round((Double.parseDouble(xCoordinate) * 1000d) / 1000d);
 			double dYCoordinate = (double)Math.round((Double.parseDouble(yCoordinate) * 1000d) / 1000d);
 			//add PCB's offset values to the x/y coordinates then convert back to String
-			xCoordinate = dXCoordinate + PNPConstants.PCB_X;
-			yCoordinate = dYCoordinate + PNPConstants.PCB_Y;
+			xCoordinate = dXCoordinate + Double.parseDouble(PNPConstants.PCB_X) + "";
+			yCoordinate = dYCoordinate + Double.parseDouble(PNPConstants.PCB_Y) + "";
 			rotation = attributes[3];
 			value = attributes[4];
 			packageType = attributes[5];
