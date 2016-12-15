@@ -92,10 +92,10 @@ public class OrientationDetailsView extends JPanel{
 	private JLabel angleLabel;
 	private JLabel routineStatusTitle;
 	private JLabel routineStatusDescription;
-	private final String POSITION_TITLE = "Position (X, Y) mm";
+	private final String POSITION_TITLE = "Position (X, Y) px";
 	private final String ROTATION_TITLE = "Rotation (R) deg";
 	private final String ROUTINE_TITLE = "Vision Routine Status";
-	private final String POSITION_DEFAULT = "(X, Y) mm";
+	private final String POSITION_DEFAULT = "(X, Y) px";
 	private final String ROTATION_DEFAULT = "R degrees";
 	private final String ROUTINE_STATUS_DEFAULT = "Waiting for data...";
 	/**

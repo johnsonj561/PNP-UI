@@ -44,6 +44,7 @@ public class CVImageView extends JPanel {
 		try {
 			bufferredImage = ImageIO.read(getClass().getResource("/images/vision-default-480x480.jpg"));
 		} catch (IOException e) {
+			bufferredImage = null;
 			System.out.println("Error loading CVImageView Class -> unable to load default image");
 		}
 		imageDisplayLabel = new JLabel(new ImageIcon(bufferredImage));
@@ -68,7 +69,7 @@ public class CVImageView extends JPanel {
 	 * @param String path of new image
 	 */
 	public void setImage(String path){
-		imageDisplayLabel.setIcon(new ImageIcon(path));
+			imageDisplayLabel.setIcon(new ImageIcon(path));
 	}
 	
 	/**

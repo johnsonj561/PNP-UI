@@ -20,7 +20,7 @@ public class ComponentFinder {
 
 		}
 		processBuilder = new ProcessBuilder("python", "PrintComponentOrientation.py");
-		processBuilder.directory(new File("C:\\java\\PnPWorkspace\\PnPMachine\\src\\orientation_detection\\pyton\\"));
+		processBuilder.directory(new File("C:\\java\\PnPWorkspace\\PnPMachine\\src\\orientation_detection\\python\\"));
 		processBuilder.redirectErrorStream(true);
 		xCenter = -1;
 		yCenter = -1;
@@ -57,7 +57,7 @@ public class ComponentFinder {
 			xCenter = Double.parseDouble(returnValues[0].replace("X", ""));
 			yCenter = Double.parseDouble(returnValues[1].replace("Y", ""));
 			orientation = Double.parseDouble(returnValues[2]);
-			imagePath = "/images/" + returnValues[3];
+			imagePath = returnValues[3];
 			imageFound = true;
 		}
 		else{
@@ -65,7 +65,6 @@ public class ComponentFinder {
 		}
 		
 	}
-	
 	
 	/**
 	 * Returns true if a component was found
