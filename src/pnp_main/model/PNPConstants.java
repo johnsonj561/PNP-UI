@@ -22,16 +22,17 @@ public final class PNPConstants {
 	//emergency stop
 	public static final String EMERGENCY_STOP = "!!!";
 	//lightbox and computer vision
-	public static final String MOVE_TO_LIGHTBOX = "G1 X35 Y35";
-	public static final String LIGHT_ON = "M12";
-	public static final String LIGHT_OFF = "M13";
-	public static final String LIFT_ABOVE_LIGHTBOX = "G1 Z5";
-	public static final String LOWER_TO_LIGHTBOX = "G1 Z3";
-	public static final String LIGHT_BOX_X = "35.0";
-	public static final String LIGHT_BOX_Y = "35.0";
+	public static final String MOVE_TO_LIGHTBOX = "G1 X42 Y49 ; Move to lightbox\n";
+	public static final String LIGHT_ON = "M12 ; Light On\n";
+	public static final String LIGHT_OFF = "M13 ; Light Off\n";
+	public static final String LIFT_ABOVE_LIGHTBOX = "G1 Z7 ; Lift Above Lightbox\n";
+	public static final String LOWER_TO_LIGHTBOX = "G1 Z5 ; Lower To Lightbox\n";
+	public static final String LIGHT_BOX_X = "42.0";
+	public static final String LIGHT_BOX_Y = "49.0";
+	public static final String CV_IMAGE_PATH = "C:/PNPLog/CV/";
 	//PCB location
-	public static final String PCB_X = "122.5";
-	public static final String PCB_Y = "20.0";
+	public static final String PCB_X = "105";
+	public static final String PCB_Y = "18";
 	//threshold for Computer vision routine
 	public static final double IMAGE_ORIENTATION_THRESHOLD = 1.0;
 	public static final double IMAGE_POSITION_THRESHOLD = 0.5;
