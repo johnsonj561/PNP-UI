@@ -71,8 +71,6 @@ public class GCodeCommand {
 			//validateInstruction() will run additional tests and return false if validation fails
 			isValidCommand = validateInstruction();
 		}
-		
-		
 	}
 
 	/**
@@ -564,8 +562,23 @@ public class GCodeCommand {
 		System.out.println(gCodeString);
 	}
 
+	/**
+	 * Retrns true if Gcode command is G56
+	 * @return
+	 */
 	public boolean isG56Command(){
 		if(gCommand && gValue == 56){
+			return true;
+		}
+		return false;
+	}
+	
+	/**
+	 * Returns true if Gcode Command is G28
+	 * @return
+	 */
+	public boolean isG28Command(){
+		if(gCommand && gValue == 28){
 			return true;
 		}
 		return false;
