@@ -5,7 +5,6 @@ import g_code_generator_ui.model.AltiumSMTComponent;
 import g_code_generator_ui.model.EagleSMTComponent;
 import java.util.ArrayList;
 import java.util.List;
-
 import pnp_main.model.PNPConstants;
 import define_parts_ui.controller.PartsFileParser;
 import define_parts_ui.model.Part;
@@ -69,12 +68,19 @@ public class GCodeGenerator {
 	 */
 	public String initializeGCode(){
 		// display project information
-		String gCode = "; Florida Atlantic University\n" +
-						"; Engineering Design 2 - PIC n Place Project\n" + 
-						"; Design By: Sam Rosenfield, Stephen Lyons, Justin Johnson\n" +
-						"; PIC n Place Project Initialized\n\n";
-		// initialize Gcode settings
-		gCode = "\nG1 Z6 ; lift head\n" +
+		String gCode =  "; /////////////////////////////////////////////////////////////////////////\n" +
+						";                     PIC N PLACE MACHINE                   \n" +
+						"; /////////////////////////////////////////////////////////////////////////\n" +
+						";                 Florida Atlantic University               \n" +
+						";                     Engineering Design 2                  \n" + 
+						"; /////////////////////////////////////////////////////////////////////////\n" +
+						";                         Design By:\n" +
+						";                      Sam Rosenfield, EE\n" +
+						";                       Stephen Lyons, EE\n" + 
+						";                   Justin Johnson, CE & CS\n" +
+						"; /////////////////////////////////////////////////////////////////////////\n\n";
+		// initialize settings
+		gCode += "\nG1 Z6 ; lift head\n" +
 				"G1 F1500 ; Set feed rate for first move\n"	+	
 				"G28 ; Home Machine's X and Y axis\n\n";
 		return gCode;
@@ -90,26 +96,41 @@ public class GCodeGenerator {
 			for(int i = 0; i < eagleInputComponents.length; i++){
 				boolean visionRequired = requiresVision(eagleInputComponents[i]);
 				gCode += moveToPart(eagleInputComponents[i]);
-				gCode += rotateHead("0.00");
 				gCode += pickUpComponent();
-				gCode += rotateHead(eagleInputComponents[i].getRotation());
+				//gCode += rotateHead(eagleInputComponents[i].getRotation());
 				//if alignment through CV is required, move to light box
 				if(visionRequired){
-					gCode += "G56 ; COMPUTER VISION ROUTINE\n";
+					//lift component, move to light box, turn light on
+					gCode += "\n; STARTING VISION ROUTINE\n";
+					gCode += PNPConstants.LIFT_ABOVE_LIGHTBOX;
+					gCode += PNPConstants.MOVE_TO_LIGHTBOX;
+					gCode += PNPConstants.LIGHT_ON;
+					gCode += PNPConstants.LOWER_TO_LIGHTBOX;
+					gCode += "G56 ; CAPTURING IMAGE\n";
+					gCode += PNPConstants.LIGHT_OFF;
+					gCode += PNPConstants.LIFT_ABOVE_LIGHTBOX;
 				}
 				gCode += moveToLocation(eagleInputComponents[i].getxCoordinate(), eagleInputComponents[i].getyCoordinate());
-				gCode += lowerComponent();
-				gCode += rotateHead("0.00") + "\n";
+				gCode += lowerComponent() + "\n";
 			}
 		}
 		else if(inputFileType == ALTIUM_CENTROID_FILE){
 			for(int i = 0; i < altiumInputComponents.length; i++){
+				boolean visionRequired = requiresVision(altiumInputComponents[i]);
 				gCode += moveToPart(altiumInputComponents[i]);
 				gCode += pickUpComponent();
 				gCode += rotateHead("0.0");
 				//if alignment through CV is required, move to light box
-				if(requiresVision(altiumInputComponents[i])){
-					gCode += "G56 ; COMPUTER VISION ROUTINE\n";
+				if(visionRequired){
+					//lift component, move to light box, turn light on
+					gCode += "\n; STARTING VISION ROUTINE\n";
+					gCode += PNPConstants.LIFT_ABOVE_LIGHTBOX;
+					gCode += PNPConstants.MOVE_TO_LIGHTBOX;
+					gCode += PNPConstants.LIGHT_ON;
+					gCode += PNPConstants.LOWER_TO_LIGHTBOX;
+					gCode += "G56 ; CAPTURING IMAGE\n";
+					gCode += PNPConstants.LIGHT_OFF;
+					gCode += PNPConstants.LIFT_ABOVE_LIGHTBOX;
 				}
 				gCode += moveToLocation(altiumInputComponents[i].getxCoordinate(), altiumInputComponents[i].getyCoordinate());
 				// Need altium file's angle of rotation
@@ -120,7 +141,7 @@ public class GCodeGenerator {
 		else{
 			return "Error: Invalid Centroid File Type Provided. Please use Altium or Eagle file types.";
 		}
-		gCode += "\nG1 F3000\nG28 ; Job Complete, Return To Home";
+		gCode += "\n\nG28 ; Job Complete, Return To Home";
 		tempPartString = updatePartFile();
 		return gCode;
 	}
@@ -149,11 +170,12 @@ public class GCodeGenerator {
 					//if we found matching footprint and value available for use, return G Code to This Part
 					XYCoordinate coordinates = part.getNextPartLocation();
 					if(coordinates != null){
-						return "G1 Z6 F300 ; lift head before moving" +
-								"\nG1 X" + coordinates.getxCoordinate() + 
+						return "G1 Z6 F300 ; lift head before moving\n" +
+								"G1 R0.00 ; rotate head to zero\n" +
+								"G1 X" + coordinates.getxCoordinate() + 
 								" Y" + coordinates.getyCoordinate() + 
-								" F1000 ; moving head to next part\n" +
-								"G1 R" + part.getTheta() + " ; Rotating to angle of part\n";
+								" F1000 ; move head to next part\n" +
+								"G1 R" + part.getTheta() + " ; rotate head to angle of part\n";
 					}
 				}
 			}
@@ -175,10 +197,11 @@ public class GCodeGenerator {
 					XYCoordinate coordinates = part.getNextPartLocation();
 					if(coordinates != null){
 						return "G1 Z6 F300 ; lift head before moving" +
-								"\nG1 X" + coordinates.getxCoordinate() + 
+								"G1 R0.00 ; rotate head to zero\n" +
+								"G1 X" + coordinates.getxCoordinate() + 
 								" Y" + coordinates.getyCoordinate() + 
-								" F1000\t ; moving head to next part\n" +
-								"G1 R" + part.getTheta() + " ; Rotating to angle of part\n";
+								" F1000\t ; move head to next part\n" +
+								"G1 R" + part.getTheta() + " ; rotate head to angle of part\n";
 					}
 				}
 			}
@@ -233,8 +256,8 @@ public class GCodeGenerator {
 	 * @return String G Code instructions that move to location (xCoord, yCoord)
 	 */
 	private String moveToLocation(String xCoord, String yCoord){
-		return "G1 Z6 F300 ; lift head before moving" +
-				"\nG1 X" + xCoord + 
+		return "G1 Z6 F300 ; lift head before moving\n" +
+				"G1 X" + xCoord + 
 				" Y" + yCoord + 
 				" F1000 ; moving head to location (" + xCoord + ", " + yCoord + ")\n";
 	}
@@ -244,10 +267,10 @@ public class GCodeGenerator {
 	 * @return String G Code instructions that lower head, turn on vacuum, and lift part 
 	 */
 	private String pickUpComponent(){
-		return "G1 Z0 F300 ; Lower head to component" +
-				"\nM10 ; Vacuum On" +
+		return "G1 Z0 F300 ; lower head to component" +
+				"\nM10 ; vacuum On" +
 				"\nG4 P5000 ; delay" +
-				"\nG1 Z6 F300 ; Lift head off table\n";
+				"\nG1 Z6 F300 ; lift head off table\n";
 	}
 
 	/**
@@ -255,10 +278,10 @@ public class GCodeGenerator {
 	 * @return String G Code instructions that lower component, turn off vacuum, and raise head
 	 */
 	private String lowerComponent(){
-		return "G1 Z0 F300;Lower head to PCB board" +
-				"\nM11; Vacuum Off" +
-				"\nG4 P5000;delay" +
-				"\nG1 Z6 F300;Lift head off PCB board\n";
+		return "G1 Z0 F300; lower head to PCB board\n" +
+				"M11; vacuum Off\n" +
+				"G4 P5000 ; delay\n" +
+				"G1 Z6 F300 ; Lift head off PCB board\n";
 	}
 
 	/**
